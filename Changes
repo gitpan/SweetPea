@@ -1,0 +1,7 @@
+Revision history for SweetPea
+
+2.00    8/28/2009 11:48 PM EST
+        Refactored to use CGI only.
+        Added makeapp method to create application structure dynamically.
+        Added ability to auto-initialize controllers so that initialization (the _new method) happens dynamically.
+
