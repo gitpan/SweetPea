@@ -1,23 +1,23 @@
---- #YAML:1.0
-name:               SweetPea
-version:            2.00
-abstract:           A simple light-weight web application framework based on an MVC design pattern using only CGI!
+---
 author:
-    - Al Newkirk <al.newkirk@awnstudio.com>
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Al Newkirk <al.newkirk@awnstudio.com>'
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    CGI:         1
-    Test::More:  0
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.54
+  ExtUtils::MakeMaker: 6.42
+configure_requires:
+  ExtUtils::MakeMaker: 6.42
+distribution_type: module
+generated_by: 'Module::Install version 0.91'
+license: unknown
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+module_name: SweetPea
+name: SweetPea
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  CGI: 0
+  Test::More: 0
+version: 2.02

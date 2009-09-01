@@ -19,11 +19,11 @@ SweetPea - A simple light-weight web application framework based on an MVC desig
 
 =head1 VERSION
 
-Version 2.00
+Version 2.02
 
 =cut
 
-our $VERSION = '2.00';
+our $VERSION = '2.02';
 
 =head1 SYNOPSIS
 
@@ -142,8 +142,7 @@ sub _plugins {
             'session',
             sub {
                 my $self = shift;
-                CGI::Session->name("SID");
-                new CGI::Session(
+                my $cgis = CGI::Session->new(
                     "driver:file",
                     undef,
                     {
@@ -151,6 +150,8 @@ sub _plugins {
                           . '/sweet/sessions'
                     }
                 );
+                $cgis->name("SID");
+                return $cgis;
             }
         );
     }
@@ -429,6 +430,17 @@ The application method is in accessor to the special "application" hashref.
 sub application {
     my $self = shift;
     return $self->{store}->{application};
+}
+
+=head2 content_type
+
+The content_type method set the desired output format for use with http headers
+
+=cut
+
+sub content_type {
+    my ( $self, $type ) = @_;
+    $self->application->{content_type} = $type;
 }
 
 =head2 uri
@@ -837,7 +849,7 @@ EOF
                         open IN, ">$path$fod" || die "Can't create $file, $!";
                         print IN $app_structure->{"$path$fod"};
                         close IN;
-                        chmod 0754, "$path$fod";
+                        chmod ( ($fod =~ /App\.pm/) ? '0755' : '0754', "$path$fod" );
                         print "Created file $fod (chmod 754) ...\n";
                     }
                     else {
