@@ -15,7 +15,7 @@ use CGI::Session;
 use FindBin;
 use File::Find;
 
-our $VERSION = '2.18';
+our $VERSION = '2.19';
 
 sub new {
     my $class = shift;
@@ -64,26 +64,23 @@ sub _plugins {
         }
     );
 
-    eval 'use CGI::Session';
-    warn 'It looks like you don\'t have CGI::Session installed.' if $@;
-    unless ($@) {
-        $self->plug(
-            'session',
-            sub {
-                my $self = shift;
-                my $cgis = CGI::Session->new(
-                    "driver:file",
-                    undef,
-                    {
-                        Directory => $self->application->{path}
-                          . '/sweet/sessions'
-                    }
-                );
-                $cgis->name("SID");
-                return $cgis;
-            }
-        );
-    }
+    $self->plug(
+        'session',
+        sub {
+            my $self = shift;
+            CGI::Session->name("SID");
+            my $sess = CGI::Session->new(
+                "driver:file",
+                undef,
+                {
+                    Directory => $self->application->{path}
+                      . '/sweet/sessions'
+                }
+            );
+            $sess->flush;
+            return $sess;
+        }
+    );
 
     # load non-core plugins from App.pm
     App->plugins($self);
@@ -272,7 +269,10 @@ sub start {
 
     # handle session
     if ( defined $self->session ) {
-        $self->session->expire();
+        $self->session->expire(
+            defined $self->application->{session}->{expiration} ?
+            $self->application->{session}->{expiration} : '1h'
+        );
         $self->cookie(
             -name  => $self->session->name,
             -value => $self->session->id
@@ -295,7 +295,7 @@ sub finish {
     }
 
     # commit session changes if a session has been created
-    $self->session->flush() if defined $self->{'.session'};
+    $self->session->flush();
 }
 
 sub forward {
@@ -333,9 +333,13 @@ sub application {
     return $self->{store}->{application};
 }
 
-sub contenttype {
+sub content_type {
     my ( $self, $type ) = @_;
     $self->application->{content_type} = $type;
+}
+
+sub request_method {
+    return $ENV{REQUEST_METHOD};
 }
 
 sub controller {
@@ -369,6 +373,18 @@ sub cookies {
       ref $self->{store}->{application}->{cookie_data} eq "ARRAY"
       ? @{ $self->{store}->{application}->{cookie_data} }
       : ();
+}
+
+sub flash {
+    my ($self, $message) = @_;
+    if (defined $message) {
+        $self->session->param('_FLASH' => $message);
+    }
+    else {
+        my $message = $self->session->param('_FLASH');
+        $self->session->param('_FLASH' => '');
+        return $message;
+    }
 }
 
 sub html {
@@ -969,7 +985,7 @@ SweetPea - A web framework that doesn't get in the way, or suck.
 
 =head1 VERSION
 
-Version 2.18
+Version 2.19
 
 =cut
 
@@ -1526,7 +1542,7 @@ that comes with creating web applications models, views and controllers.
         SweetPea::makemodl( $sub, 'schema/foo' );
     }
     
-    # More information be be made available soon.
+    # More information will be made available soon.
 
 =cut
 
@@ -1696,17 +1712,32 @@ that comes with creating web applications models, views and controllers.
     $s->application->{content_type} = 'text/html';
     
     This is just an example, to change the content type please use
-    $s->contenttype('text/html');
+    $s->content_type('text/html');
     Content-Type is always 'text/html' by default.
 
 =cut
 
-=head2 contenttype
+=head2 content_type
 
-    The contenttype method set the desired output format for use
+    The content_type method set the desired output format for use
     with http response headers.
     
-    $s->contenttype('text/html');
+    $s->content_type('text/html');
+
+=cut
+
+=head2 request_method
+
+    The request_method determines the method (either Get or Post) used
+    to requests the current action.
+
+=cut
+
+=head2 flash
+
+    The flash method provides the ability to pass a single string of data
+    from request "A" to request "B", then that data is deleted as to prevent
+    it from being passed to any additional requests.
 
 =cut
 
