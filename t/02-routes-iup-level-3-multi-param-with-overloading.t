@@ -20,4 +20,4 @@ my $s = sweet->routes({
         $s->output('debug', 'cli');
     }
 
-})->test('/test/three/123/456/789');
+})->test('/test/three/123/456/789/abc/def/eig/hij/klm/nop');

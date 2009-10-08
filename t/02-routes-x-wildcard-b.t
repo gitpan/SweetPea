@@ -1,5 +1,5 @@
 #!perl
-use Test::More tests => 5;
+use Test::More tests => 4;
 BEGIN {
     use_ok('SweetPea');
 }
@@ -8,16 +8,15 @@ BEGIN {
 
 my $s = sweet->routes({
 
-    '/test/three/:a/:b/:c' => sub {
+    '/download/:file/via/:ext' => sub {
         my $s = shift;
         ok(1, 'route mapped');
-        is($s->param('a'), '123', 'level-3.1 inline url parameter');
-        is($s->param('b'), '456', 'level-3.2 inline url parameter');
-        is($s->param('c'), '789', 'level-3.3 inline url parameter');
+        is($s->param('file'), 'files.fosswire.com/2007/08/fwunixref.txt', 'random url w/inline param 1');
+        is($s->param('ext'), 'pdf', 'random url w/inline param 2');
         
         # prevent printing headers
         $s->debug('ran adv routing tests...');
         $s->output('debug', 'cli');
     }
 
-})->test('/test/three/123/456/789');
+})->test('/download/files.fosswire.com/2007/08/fwunixref.txt/via/pdf');
