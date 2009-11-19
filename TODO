@@ -6,6 +6,8 @@
     [!] Root.pm & Sweet.pm generated with wrong/bad permissions
 
 #   pending
+-   [-] Change the welcome screen to match website
+-   [-] Fix generated file permissiosn, maybe include a file permissions checker
 -   [x] Add (request) as an alias to request_method, allow it to accept params e.g. if $s->request('get');
 -   [x] Fix sweetpea cli to create folders for ops crtl, model, and view
 -   [x] CPAN-Testers reports calling plugin on unloaded object(App)

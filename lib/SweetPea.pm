@@ -1,4 +1,11 @@
 package SweetPea;
+use 5.006;
+
+=head1 NAME
+
+SweetPea - A web framework that doesn't get in the way, or suck.
+
+=cut
 
 BEGIN {
     use Exporter();
@@ -12,7 +19,86 @@ use CGI::Carp qw/fatalsToBrowser/;
 use FindBin;
 use File::Find;
 
-our $VERSION = '2.363';
+=head1 VERSION
+
+Version 2.364
+
+=cut
+
+our $VERSION = '2.364';
+
+=head1 DESCRIPTION
+
+SweetPea is a modern web application framework that is fast, scalable, and
+light-weight. SweetPea has no dependencies so it runs everywhere Perl does.
+SweetPea has a short learning curve and a common sense object-oriented API.
+
+=head1 SYNOPSIS
+
+Oh how Sweet web application development can be ...
+
+    # from the command-line (requires SweetPea::Cli)
+    sweetpea make -s
+    
+    use SweetPea;
+    sweet->routes({
+    
+        '/' => sub {
+            shift->forward('/way');
+        },
+        
+        '/way' => sub {
+            shift->html('I am the way the truth and the light!');
+        }
+        
+    })->run;
+
+=cut
+
+=head1 NOTICE!
+
+This POD is being re-written may appear incomplete. If so please refer to
+L<SweetPea::Overview> for the original documentation, keep in mind that
+the original documentation may/is probably out-dated.
+
+Also Note!
+The sweetpea application generator script has been moved to
+L<SweetPea::Cli> and the usage and syntax has changed a bit.
+
+=head1 METHODS
+
+=head2 new
+
+I<the `new` method is used to instantiate a new SweetPea object.>
+
+new B<arguments>
+
+=over 3
+
+=item L<options|/"\%options">
+
+=back
+
+new B<usage and syntax>
+
+    $self = SweetPea->new(\%options)
+    
+    takes 1 argument
+        1st argument  - optional
+            \%options - sweetpea runtime options
+            
+    example:
+    my $self = sweet;
+    
+    my $self = SweetPea->new({
+        local_session => 1
+    });
+    
+    my $self = SweetPea->new({
+        session_folder => '/tmp/site1'
+    });
+
+=cut
 
 sub new {
     my $class   = shift;
@@ -33,6 +119,27 @@ sub new {
     return $self;
 }
 
+=head2 run
+
+I<the `run` method is used to discover controllers and actions then
+executes internal pre and post request processing routines.>
+
+run B<arguments>
+
+no arguments
+
+run B<usage and syntax>
+
+    $self = $self->run
+    
+    takes 0 arguments
+    
+    example:
+    my $self = sweet;
+    $self->run;
+
+=cut
+
 sub run {
     my $self = shift;
     $self->_plugins;
@@ -41,18 +148,77 @@ sub run {
     return $self;
 }
 
+=head2 test
+
+I<the `test` method is used to simulate processing requests from the
+command line. Equivalent to the `run` method.>
+
+test B<arguments> 
+
+=over 3
+
+=item L<route|/"$route"> L<options|/"\%options">
+
+=back
+
+test B<usage and syntax>
+
+    $self = $self->test($route, \%options)
+    
+    takes 2 arguments
+        1st argument  - optional
+            $route    - sweetpea url route
+        2nd argument  - optional
+            \%options - sweetpea runtime options
+            
+    example:
+    my $self = sweet->test;
+
+=cut
+
 sub test {
-    my ($self, $route) = @_;
+    my ($self, $route, $options) = @_;
+    
     # set up testing environment
     $route = '/' unless $route;
     $self->{store}->{application}->{test}->{route} = 
     $ENV{SCRIPT_NAME}   = "/.pl";
     $ENV{PATH_INFO}     = "$route";
-    $self->run;
+    $self->run($options);
 }
 
+=head2 mock
+
+I<the `mock` method is used to process a sub-request and return the
+output without breaking the existing request. Useful for fetching pages
+to display or attach in email messages.>
+
+mock B<arguments>
+
+=over 3
+
+=item L<route|/"$route">
+
+=back
+
+mock B<usage and syntax>
+
+    $self = $self->mock($route, \%options)
+    
+    takes 2 arguments
+        1st argument  - required
+            $route    - url path
+        2nd argument  - optional
+            \%options - sweetpea runtime options
+    
+    example:
+    my $self = sweet;
+    my @content = $self->mock('/path');
+
+=cut
+
 sub mock {
-    my ($self, $route)      = @_;
+    my ($self, $route, $options) = @_;
     # mock can only be run as a get request
     my $original_request    = $ENV{REQUEST_METHOD};
     my $original_pathinfo   = $ENV{PATH_INFO};
@@ -75,6 +241,33 @@ sub mock {
     return @return;
 }
 
+=head2 mock_data
+
+I<the `mock_data` method is used by the `mock` method to store output from
+various stages of the sub-processing.>
+
+mock_data B<arguments>
+
+=over 3
+
+=item L<data|/"\@data">
+
+=back
+
+mock_data B<usage and syntax>
+
+    $self->mock_data(@data);
+    
+    takes 1 argument
+        1st argument  - required
+            @data     - content to be pushed into the mock datastore for
+                        later retrieval
+            
+    example:
+    This method is/should be only used by the `mock` method.
+
+=cut
+
 sub mock_data {
     my ( $self, @data ) = @_;
     if (@data) {
@@ -94,6 +287,26 @@ sub mock_data {
         }
     }
 }
+
+=head2 _plugins
+
+I<the `_plugins` method, used by the `run` method, is used to process
+pre-defined plugins and load user-defined plugins.>
+
+_plugins B<arguments>
+
+no arguments
+
+_plugins B<usage and syntax>
+
+    $self = $self->_plugins;
+    
+    takes 0 arguments
+            
+    example:
+    This method is used mainly by the `run` method.
+
+=cut
 
 sub _plugins {
     my $self = shift;
@@ -183,6 +396,27 @@ sub _plugins {
     return $self;
 }
 
+=head2 _load_path_and_actions
+
+I<the `_load_path_and_actions` method is used to auto-discover Controllers
+and Actions, create the actions table, by treversing the Controllers
+folder.>
+
+_load_path_and_actions B<arguments>
+
+no arguments
+
+_load_path_and_actions B<usage and syntax>
+
+    \%actions = $self->_load_path_and_actions;
+    
+    takes 0 arguments
+            
+    example:
+    This method is use by the `run` method. And is not called manually.
+
+=cut
+
 sub _load_path_and_actions {
     my $self = shift;
 
@@ -253,10 +487,30 @@ sub _load_path_and_actions {
 sub _self_check {
     my $self = shift;
 
-    # check manifest if available
+    # used to do something useful, not anymore
     my $path = $self->application->{path};
     return $self;
 }
+
+=head2 _init_dispatcher
+
+I<the `_init_dispatcher` method is used to process the global, local, and
+current request routines.>
+
+_init_dispatcher B<arguments>
+
+no arguments
+
+_init_dispatcher B<usage and syntax>
+
+    $self->_init_dispatcher;
+    
+    takes 0 arguments
+            
+    example:
+    This method is use by the `run` method and is not called manually.
+
+=cut
 
 sub _init_dispatcher {
     my $self = shift;
@@ -364,6 +618,26 @@ sub _init_dispatcher {
         exit;
     }
 }
+
+=head2 _url_parser
+
+I<the `_url_parser` method is used to determine the true environment of
+the current request as well as parse vaiable data in the url path.>
+
+_url_parser B<arguments>
+
+no arguments
+
+_url_parser B<usage and syntax>
+
+    $boolean = $self->_url_parser;
+    
+    takes 0 argument
+            
+    example:
+    This method is use by the `run` method and is not called manually.
+
+=cut
 
 sub _url_parser {
     my ($self, $actions) = @_;
@@ -496,6 +770,27 @@ sub _url_parser {
     return 0;
 }
 
+=head2 start
+
+I<the `start` method is used to print header information to the browser
+as well as perform other pre-print activities.>
+
+start B<arguments>
+
+no arguments
+
+start B<usage and syntax>
+
+    $self->start;
+    
+    takes 0 arguments
+            
+    example:
+    This method is use by the `_init_dispatcher` method and is not called
+    manually.
+
+=cut
+
 sub start {
     my $self = shift;
 
@@ -520,6 +815,27 @@ sub start {
     }
 }
 
+=head2 finish
+
+I<the `finish` method is used to finalize the request and perform all
+last-minute activities.>
+
+finish B<arguments>
+
+no arguments
+
+finish B<usage and syntax>
+
+    $self->finish;
+    
+    takes 0 arguments
+            
+    example:
+    This method is use by the `_init_dispatcher` method and is not called
+    manually.
+
+=cut
+
 sub finish {
     my $self = shift;
 
@@ -538,6 +854,48 @@ sub finish {
     $self->session->flush();
 }
 
+=head2 forward
+
+I<the `forward` method is used to jump between actions (sub routines) to
+process related information then returns to the original action to finish
+processing.>
+
+forward B<arguments>
+
+=over 3
+
+=item L<route|/"$route">
+
+=item L<self|/"$self">
+
+=back
+
+forward B<usage and syntax>
+
+    $self->forward($route, $self);
+    
+    takes 2 arguments
+        1st argument  - required
+            $route    - display help for a specific command
+        2nd argument  - optional
+            $self     - The current class, used as a reference
+            
+    example:
+    my $self = sweet;
+    $self->routes({
+        '/' => sub {
+            shift->forward('/more');
+            print ', buddy';
+        }
+        '/more' => sub {
+            print '... here i am :)';
+        }
+    });
+    
+    # prints here i am, buddy
+
+=cut
+
 sub forward {
     my ( $self, $path, $class ) = @_;
 
@@ -546,6 +904,49 @@ sub forward {
     exists $self->application->{actions}->{"$path"};
 }
 
+=head2 detach
+
+I<the `detach` method is used to jump between actions (sub routines) to
+process related information but does NOT return to the original action to
+finish processing. Actually it invokes the finalization routines and
+the exits.>
+
+detach B<arguments>
+
+=over 3
+
+=item L<route|/"$route">
+
+=item L<self|/"$self">
+
+=back
+
+detach B<usage and syntax>
+
+    $self->detach($route, $self);
+    
+    takes 2 arguments
+        1st argument  - required
+            $route    - display help for a specific command
+        2nd argument  - optional
+            $self     - The current class, used as a reference
+            
+    example:
+    my $self = sweet;
+    $self->routes({
+        '/' => sub {
+            shift->detach('/more');
+            print ', buddy';
+        }
+        '/more' => sub {
+            print '... here i am :)';
+        }
+    });
+    
+    # prints here i am
+
+=cut
+
 sub detach {
     my ( $self, $path, $class ) = @_;
     $self->forward( $path, $class );
@@ -553,6 +954,34 @@ sub detach {
     $self->finish();
     exit;
 }
+
+=head2 redirect
+
+I<the `redirect` method is used to redirect the browser to an alternate
+resource.>
+
+redirect B<arguments>
+
+=over 3
+
+=item L<url|/"$url">
+
+=back
+
+redirect B<usage and syntax>
+
+    $self->redirect($url);
+    
+    takes 1 argument
+        1st argument  - required
+            $url      - absolute or relative url
+            
+    example:
+    my $self = sweet;
+    $self->redirect('http://www.sweetpea.com');
+    $self->redirect('/static/index.html');
+
+=cut
 
 sub redirect {
     my ( $self, $url ) = @_;
@@ -565,20 +994,129 @@ sub redirect {
     exit;
 }
 
+=head2 store
+
+I<the `store` method is used to return the SweetPea application stash
+object.>
+
+store B<arguments>
+
+no arguments
+
+store B<usage and syntax>
+
+    my $stash = $self->store;
+    
+    takes 0 arguments
+            
+    example:
+    my $self = sweet;
+    my $stash = $self->store;
+    $self->store->{foo} = 'bar';
+    print $self->store->{foo};
+    
+    # prints 'bar'
+
+=cut
+
 sub store {
     my $self = shift;
     return $self->{store};
 }
+
+=head2 application
+
+I<the `application` method is used to return a special section of the
+sweetpea stash reserved for application configuration variables.>
+
+application B<arguments>
+
+no arguments
+
+application B<usage and syntax>
+
+    $self->application;
+    
+    takes 0 arguments
+            
+    example:
+    my $self = sweet;
+    my $stash = $self->application;
+    $self->application->{foo} = 'bar';
+    print $self->application->{foo};
+    
+    # prints 'bar'
+
+=cut
 
 sub application {
     my $self = shift;
     return $self->{store}->{application};
 }
 
+=head2 content_type
+
+I<the `content_type` method is used to set the type of content the browser
+should expect to be returned.>
+
+content_type B<arguments>
+
+=over 3
+
+=item L<content_type|/"$content_type">
+
+=back
+
+content_type B<usage and syntax>
+
+    $self->content_type($content_type);
+    
+    takes 1 argument
+        1st argument        - required
+            $content_type   - type of content to be returned
+            
+    example:
+    my $self = sweet;
+    $self->content_type('text/html');
+    $self->content_type('text/plain');
+
+=cut
+
 sub content_type {
     my ( $self, $type ) = @_;
     $self->application->{content_type} = $type;
 }
+
+=head2 request_method
+
+I<the `request_method` method is used to determine the method used by the
+browser to request the specified resource.>
+
+request_method B<arguments>
+
+=over 3
+
+=item L<method|/"$method">
+
+=back
+
+request_method B<usage and syntax>
+
+    $self->request_method;
+    
+    takes 1 argument
+        1st argument  - optional
+            $method   - method to match against the current request
+            
+    example:
+    my $self = sweet;
+    my $foo = $self->request_method;
+    # $foo equals Get, Post, etc
+    
+    my $foo = $self->request_method('get');
+    # foo is 1 if current request method is 'get' or 0 if not
+
+=cut
 
 sub request_method {
     my ($self, $method) = @_;
@@ -590,9 +1128,43 @@ sub request_method {
     }
 }
 
+=head2 request
+
+I<the `request` method is a synonym for the `request_method` method.>
+
+=cut
+
 sub request {
     shift->request_method(@_);
 }
+
+=head2 push_download
+
+I<the `push_download` method is used to force a browser to prompt it's
+user to download the specified content rather than to display it.>
+
+push_download B<arguments>
+
+=over 3
+
+=item L<file_or_data|/"$file_or_data">
+
+=back
+
+push_download B<usage and syntax>
+
+    $self->push_download($file_or_data);
+    
+    takes 1 argument
+        1st argument        - required
+            $file_or_data   - file or data to be sent as a download
+            
+    example:
+    my $self = sweet;
+    $self->push_download('/tmp/text_file.txt');
+    $self->push_download('this is a test');
+
+=cut
 
 sub push_download {
     my ($self, $file) = @_;
@@ -601,44 +1173,81 @@ sub push_download {
         return $self->finish;
     }
     
-    if (-e $file) {
+    my $data;
+    my $ext;
+    
+    if (-e $file && $file) {
         my $name = $file =~ /\/?([\w\.]+)$/ ? $1 : $file;
-        my $ext  = $name =~ s/(\.\w+)$/$1/ ? $1 : '';
-        my $data = $self->file('<', $file);
-        if ($data) {
-            my $ctype = "application/force-download";
-            $ctype = "application/pdf"
-                if $ext eq ".pdf";
-            $ctype = "application/octet-stream"
-                if $ext eq ".exe";
-            $ctype = "application/zip"
-                if $ext eq ".zip";
-            $ctype = "application/msword"
-                if $ext eq ".doc";
-            $ctype = "application/vnd.ms-excel"
-                if $ext eq ".xls";
-            $ctype = "application/vnd.ms-powerpoint"
-                if $ext eq ".ppt";
-            $ctype = "image/jpg"
-                if $ext eq ".jpg" || $ext eq ".jpeg";
-            $ctype = "image/gif"
-                if $ext eq ".gif";
-            $ctype = "image/png"
-                if $ext eq ".png";
-            $ctype = "text/plain"
-                if $ext eq ".txt";
-            $ctype = "text/html"
-                if $ext eq ".html" || $ext eq ".htm";
+           $ext  = $name =~ s/(\.\w+)$/$1/ ? $1 : '';
+           $data = $self->file('<', $file);
+    }
+    else {
+        $data = $file;
+        $ext  = '.txt';
+    }
+    if ($data) {
+        my $ctype = "application/force-download";
+        $ctype = "application/pdf"
+            if $ext eq ".pdf";
+        $ctype = "application/octet-stream"
+            if $ext eq ".exe";
+        $ctype = "application/zip"
+            if $ext eq ".zip";
+        $ctype = "application/msword"
+            if $ext eq ".doc";
+        $ctype = "application/vnd.ms-excel"
+            if $ext eq ".xls";
+        $ctype = "application/vnd.ms-powerpoint"
+            if $ext eq ".ppt";
+        $ctype = "image/jpg"
+            if $ext eq ".jpg" || $ext eq ".jpeg";
+        $ctype = "image/gif"
+            if $ext eq ".gif";
+        $ctype = "image/png"
+            if $ext eq ".png";
+        $ctype = "text/plain"
+            if $ext eq ".txt";
+        $ctype = "text/html"
+            if $ext eq ".html" || $ext eq ".htm";
 
-            print("Content-Type: $ctype\n");
-            print("Content-Transfer-Encoding: binary\n");
-            print("Content-Length: " . length($data) . "\n" );
-            print("Content-Disposition: attachment; filename=\"$name\";\n\n");
-            print("$data");
-            exit;
-        }
+        print("Content-Type: $ctype\n");
+        print("Content-Transfer-Encoding: binary\n");
+        print("Content-Length: " . length($data) . "\n" );
+        print("Content-Disposition: attachment; filename=\"$name\";\n\n");
+        print("$data");
+        exit;
     }
 }
+
+=head2 controller
+
+I<the `controller` method is used to determine the current controller.>
+
+controller B<arguments>
+
+=over 3
+
+=item L<route|/"$route">
+
+=back
+
+controller B<usage and syntax>
+
+    $self->controller;
+    
+    takes 1 argument
+        1st argument  - optional
+            $route    - route to append to the current route
+            
+    example:
+    my $self = sweet;
+    my $foo = $self->controller;
+    # foo equals '/by' if current url path is '/by'
+    
+    my $foo = $self->controller('/theway');
+    # foo equals '/by/theway' if current url path is '/by/theway'
+
+=cut
 
 sub controller {
     my ( $self, $path ) = @_;
@@ -646,10 +1255,67 @@ sub controller {
     return "$controller$path" if $controller || $path;
 }
 
+=head2 action
+
+I<the `action` method is used to determine the current action being
+requested.>
+
+action B<arguments>
+
+no arguments
+
+action B<usage and syntax>
+
+    my $action = $self->action;
+    
+    takes 0 arguments
+            
+    example:
+    my $action = $self->action;
+    # $action equals 'test' if url is http://localhost/do/test
+    # $action equals '_index' if url is http://localhost/do/test and
+    # controller is Do::Test
+
+=cut
+
 sub action {
     my $self = shift;
     return $self->uri->{action};
 }
+
+=head2 uri
+
+I<the `uri` method is can be used to provide access to various parts of the URL
+or return the existing/new URL.>
+
+uri B<arguments>
+
+=over 3
+
+=item L<route|/"$routes">
+
+=back
+
+uri B<usage and syntax>
+
+    $self->uri($route);
+    
+    takes 1 argument
+        1st argument  - optional
+            $route    - route for use in the creation of the url
+            
+    example:
+    my $self = sweet;
+    my $url = $self->uri;
+    # if the current url is http://localhost/newapp/by/theway and newapp
+    # is a subfolder under the docroot where our app is stored
+    # $url->{here} equals http://localhost/newapp/by/theway
+    # $url->{root} equals http://localhost/newapp
+    
+    my $url = $self->uri('/my_friend');
+    # $url equals http://localhost/newapp/by/theway/my_friend
+
+=cut
 
 sub uri {
     my ( $self, $path ) = @_;
@@ -662,7 +1328,46 @@ sub uri {
       : "$self->{store}->{application}->{'url'}->{'root'}/$path" );
 }
 
+=head2 url
+
+I<the `url` method is a synonym for the `uri` method.>
+
+=cut
+
 sub url { return shift->uri(@_); }
+
+=head2 path
+
+I<the `path` method is used to determine the current root path of the
+application or return a new path based on the specified path.>
+
+path B<arguments>
+
+=over 3
+
+=item L<path|/"$path">
+
+=back
+
+path B<usage and syntax>
+
+    $self->path($path);
+    
+    takes 1 argument
+        1st argument  - optional
+            $path     - path to append to the root path to be returned
+            
+    example:
+    my $self = sweet;
+    my $doc_root = $self->path;
+    # $doc_root equals /var/www/site01 if /var/www/site01 is where the
+    # application root is
+    
+    my $path = $self->path('/sweet/sessions');
+    # $path equals /var/www/site01/sweet/sessions if /var/www/site01
+    # is where the application root is
+
+=cut
 
 sub path {
     my ( $self, $path ) = @_;
@@ -672,6 +1377,27 @@ sub path {
       : $self->{store}->{application}->{'path'};
 }
 
+=head2 cookies
+
+I<the `cookies` method is used to return an array of all currently
+existing browser cookies.>
+
+cookies B<arguments>
+
+no arguments
+
+cookies B<usage and syntax>
+
+    my @cookies = $self->cookies;
+    
+    takes 0 arguments
+    
+    example:
+    my @cookies = $self->cookies;
+    # where each @cookies element is a CGI::Cookie object
+
+=cut
+
 sub cookies {
     my $self = shift;
     return
@@ -680,18 +1406,132 @@ sub cookies {
       : ();
 }
 
+=head2 flash
+
+I<the `flash` method is used to store and retrieve messages in the session
+store for use across requests.>
+
+flash B<arguments>
+
+=over 3
+
+=item L<flash_message|/"$flash_message"> L<flash_type|/"$flash_type">
+
+=back
+
+flash B<usage and syntax>
+
+    $self->flash($message, $type);
+    $self->flash($type);
+    
+    takes 2 arguments
+        1st argument  - required
+            $message  - display help for a specific command
+        2nd argument  - optional
+            $type     - type of message to flash [error|info|warn|success]
+            
+    example:
+    my $self = sweet;
+    $self->flash('info', 'something weird happened');
+    $self->flash('warn', 'something weird happened');
+    $self->flash('error', 'something really bad happened');
+    $self->flash('success', 'something went terribly right');
+    # the above commands all set (flash) session messages in thier
+    # respective stores, stores being info, warn, error or success
+    
+    $self->flash('success', 'something went terribly right');
+    # now the flash `success` store is an array and the new entry has
+    # been appended
+    
+    my $success_message = $self->flash('success');
+    my $warn_message = $self->flash('warn');
+    ...
+    # now $success_message, and $warn_message, etc are equal to the last
+    # messages stored in thier respective stores and the stores themselves
+    # are cleared
+
+=cut
+
 sub flash {
-    my ( $self, $message ) = @_;
+    my ( $self, $type, $message ) = @_;
+    my $store;
+    
+    $store = '_INFO'     if lc($type) eq 'info';
+    $store = '_WARN'     if lc($type) eq 'warn';
+    $store = '_ERROR'    if lc($type) eq 'error';
+    $store = '_SUCCESS'  if lc($type) eq 'success';
+    
+    # sets a default, backwards compatibility
+    if ((lc($type) ne 'info' && lc($type) ne 'warn'
+    && lc($type) ne 'error'  && lc($type) ne 'success')
+    && ($type && !$store && !$message)) {
+        $message = $type;
+        $store   = '_INFO';
+    }
+    
+    # prepare for return value
+    if ((lc($type) eq 'info' || lc($type) eq 'warn'
+    || lc($type) eq 'error'  || lc($type) eq 'success')
+    || ($type && $store && !$message)) {
+        $message = '';
+    }
+    
     if ( defined $message ) {
-        my $last_message = $self->session->param( '_FLASH' );
-        $self->session->param( '_FLASH' => $message );
+        my $last_message = $self->session->param( $store );
+        
+        # append magic if message is not empty
+        if ($message ne '' && $last_message) {
+            my $arrayref = [];
+            if (ref ($last_message) eq "ARRAY") {
+                push @{$arrayref}, $_ foreach @{$last_message};
+            }
+            push @{$arrayref}, $message;
+            $message = $arrayref;
+        }
+        
+        $self->session->param( $store => $message );
         $self->session->flush;
         return $message eq '' ? $last_message : $message;
     }
     else {
-        return $self->session->param('_FLASH');
+        return $self->session->param($store);
     }
 }
+
+=head2 file
+
+I<the `file` method is used to read and write files under the application
+root with ease.>
+
+file B<arguments>
+
+=over 3
+
+=item L<filemode|/"$filemode"> L<filename|/"$filename"> L<data|/"@data">
+
+=back
+
+file B<usage and syntax>
+
+    my $content = $self->file($filemode, $filename, @data);
+    
+    takes 3 arguments
+        1st argument  - required
+            $filemode - method used to open a file, e.g. [>>, >, <]
+        2nd argument  - required
+            $filename - name and path of the file to read or write to
+        3rd argument  - optional
+            @data     - content to be written to the specified file
+            
+    example:
+    my $self = sweet;
+    my $data = $self->file('>', 'new_folder/new_text.txt', 'a test');
+    # creates a file new_text.txt in folder new_folder with one line
+    
+    my $data = $self->file('<', 'new_folder/new_text.txt');
+    # read in file content from new_folder/new_text.txt
+    
+=cut
 
 sub file {
     my ($self, $op, $file, @content) = @_;
@@ -699,28 +1539,83 @@ sub file {
     if ($file) {
         if (grep {/^(\<|\>|\>\>)$/} $op) {
             if ($op =~ /\>/) {
+                my $bmsk = $content[0] if $content[0] =~ /^\d{3,4}$/;
+                if ($bmsk) {
+                    $bmsk = ($bmsk !~ /^\d{4}$/ ? oct($bmsk) : $bmsk);
+                }
+                else {
+                    $bmsk = '0777';
+                }
+                # mkdirs if neccessary
+                my @dirs   = ();
+                my @path   = split /\//, $file;
+                   $file   = pop @path;
+                map {
+                        push @dirs, $_;
+                        mkdir( join('/', @dirs), $bmsk) unless -d
+                            join('/', @dirs);
+                } @path;
                 $output = join "\n", @content;
-                open FILE, $op, $file;
-                print FILE $output;
-                close FILE;
+                open (my $in, $op,
+                      (@path ? join('/', @path)."/".$file : $file))
+                        || die "Error: $file, $!";
+                print $in $output;
+                close $in;
+                chmod $bmsk, $file;
             }
             else {
                 if (-e $file) {
-                    open FILE, $op, $file;
-                    while (<FILE>) {
+                    open( my $out, $op, $file ) || die "Error: $file, $!";
+                    while (<$out>) {
                         $output .= $_;
                     }
-                    close FILE;
+                    close $out;
                 }
             }
         }
         elsif ($op eq 'x') {
-            unlink $file;
-            return 1;
+            if (-e $file) {
+                $output = $self->file('<', $file);
+                unlink $file;
+            }
         }
     }
     return $output;
 }
+
+=head2 upload
+
+I<the `upload` method is used to simplify uploading files from clients to
+the application server space.>
+
+upload B<arguments>
+
+=over 3
+
+=item L<upload_field|/"$upload_field"> L<path|/"$path">
+L<filename|/"$filename">
+
+=back
+
+upload B<usage and syntax>
+
+    my $filename = $self->upload($upload_field, $path, $filename);
+    
+    takes 3 arguments
+        1st argument      - required
+            $upload_field - name of the field input element
+        2nd argument      - required
+            $path         - path to folder where file will be saved
+        3rd argument      - optional
+            $filename     - name of file to be created
+            
+    example:
+    my $self = sweet;
+    $self->upload('form_field', '/tmp/uploads');
+    # uploads a file from the client to the server using localtime to 
+    # create the filename
+
+=cut
 
 sub upload {
     my ($self, $upload_field, $location, $filename) = @_;
@@ -745,6 +1640,40 @@ sub upload {
     }
 }
 
+=head2 html
+
+I<the `html` method is used to store data at various stages of the request
+and return that data for output.>
+
+html B<arguments>
+
+=over 3
+
+=item L<data|/"@data">
+
+=back
+
+html B<usage and syntax>
+
+    my @data = $self->html;
+    
+    takes 1 argument
+        1st argument  - optional
+            @data     - data to be stored for output
+            
+    example:
+    my $self  =sweet;
+    $self->html('save this for me', 'oh yeah, and this too');
+    my @data = $self->html;
+    # @data equals ['save this for me', 'oh yeah, and this too']
+    my @data = $self->html;
+    # @data equals [] because $self->html (no args) clears the store
+    
+    # Note! This method is called automatically and rendered if no
+    # template is specified.
+
+=cut
+
 sub html {
     my ( $self, @html ) = @_;
     if (@html) {
@@ -764,6 +1693,37 @@ sub html {
         }
     }
 }
+
+=head2 debug
+
+I<the `debug` method is used to store data to be output at the command-line
+for debugging purposes.>
+
+debug B<arguments>
+
+=over 3
+
+=item L<data|/"@data">
+
+=back
+
+debug B<usage and syntax>
+
+    $self->debug;
+    
+    takes 1 argument
+        1st argument  - optional
+            @data     - data to be stored for output
+            
+    example:
+    my $self  =sweet;
+    $self->debug('something happened here', "\$var has a val of $var");
+    my @data = $self->data;
+    # @data equals ['something happened here', "$var has a val of blah"]
+    my @data = $self->data;
+    # @data equals [] because $self->data (no args) clears the store
+
+=cut
 
 sub debug {
     my ( $self, @debug ) = @_;
@@ -789,6 +1749,45 @@ sub debug {
         }
     }
 }
+
+=head2 output
+
+I<the `output` method is used to render stored data to the browser or
+command-line.>
+
+output B<arguments>
+
+=over 3
+
+=item L<output_what|/"$output_what"> L<output_where|/"$output_where">
+L<seperator|/"$seperator">
+
+=back
+
+output B<usage and syntax>
+
+    $self->output($output_what, $output_where, $seperator);
+    
+    takes 3 arguments
+        1st argument     - required
+            $output_what - what data store to render [html|debug]
+        2nd argument     - optional
+            $output_where- where to render content [web|cli]
+        3rd argument     - optional
+            $seperator   - printable line seperator
+            
+    example:
+    my $self = sweet;
+    $self->output('html'); # print html store to browser using <br/>
+    $self->output('debug'); # print debug store to browser using <br/>
+    
+    $self->output('html', 'cli');
+    # print html store to the command-line using \n
+    
+    $self->output('debug', 'cli', ',');
+    # print debug store to the command-line using `,` as a seperator
+
+=cut
 
 sub output {
     my ( $self, $what, $where, $using ) = @_;
@@ -828,6 +1827,43 @@ sub output {
     }
 }
 
+=head2 plug
+
+I<the `plug` method is used to create accessors to add-on module classes.>
+
+plug B<arguments>
+
+=over 3
+
+=item L<accessor_name|/"$accessor_name"> L<code_ref|/"$code_ref">
+
+=back
+
+plug B<usage and syntax>
+
+    $self->plug($accessor_name, $code_ref);
+    
+    takes 2 argument
+        1st argument        - required
+            $accessor_name  - name to be used in the app to access the code
+        2ns argument        - required
+            $code_ref       - code that instantiates an object of a class
+            
+    example:
+    my $self = sweet;
+    $self->plug('cgi', sub {
+        shift;
+        CGI->new(@_);
+    });
+    
+    # elsewhere in the code
+    $self->cgi->param('foo'); # etc
+    $self->cgi->url_param('bar'); # same instance, different method call
+    
+    $self->unplug('cgi')->cgi->param('foo'); # new instance
+
+=cut
+
 sub plug {
     my ( $self, $name, $init ) = @_;
     if ( $name && $init ) {
@@ -849,11 +1885,76 @@ sub plug {
     }
 }
 
+=head2 unplug
+
+I<the `unplug` method is used to delete the existing class object
+instance so a new one can be created.>
+
+unplug B<arguments>
+
+=over 3
+
+=item L<accessor_name|/"$accessor_name">
+
+=back
+
+unplug B<usage and syntax>
+
+    $self = $self->unplug($accessor_name);
+    
+    takes 1 argument
+        1st argument       - required
+            $accessor_name - name to be used in the app to access the code
+            
+    example:
+    my $self = sweet;
+    $self->unplug('cgi');
+    # creates a new instance of the CGI class object the next time
+    # $self->cgi is called.
+
+=cut
+
 sub unplug {
     my ( $self, $name ) = @_;
     delete $self->{".$name"};
     return $self;
 }
+
+=head2 routes
+
+I<the `routes` method is used to define custom routes, routing urls to
+controllers and actions.>
+
+routes B<arguments>
+
+=over 3
+
+=item L<actions|/"\%actions">
+
+=back
+
+routes B<usage and syntax>
+
+    $self = $self->routes($actions);
+    
+    takes 1 argument
+        1st argument  - required
+            \%actions - hashref of urls and coderef
+            
+    example:
+    my $self = sweet;
+    $self->routes({
+        '/' => sub {
+            my $s = shift;
+            $s->html('Im an index page.');
+        },
+        '/about' => sub {
+            my $s = shift;
+            $s->html('Im an about us page');
+        }
+    });
+
+=cut
 
 sub routes {
     my ( $self, $routes ) = @_;
@@ -865,8 +1966,50 @@ sub routes {
     return $self;
 }
 
+=head2 param
+
+I<the `param` method is used to access get, post and session parameters.>
+
+param B<arguments>
+
+=over 3
+
+=item L<param_name|/"$param_name"> L<param_type|/"$param_type">
+L<param_value|/"$param_value">
+
+=back
+
+param B<usage and syntax>
+
+    my $value = $self->param($param_name, $param_type);
+    
+    takes 2 argument
+        1st argument    - required
+            $param_name - name of the get, post or session parameter
+        2nd argument    - optional
+            $param_type - type of parameter
+            
+    example:
+    my $self = sweet;
+    my $value = $self->param('foo');
+    my $value = $self->param('foo', 'get');
+    
+    my $new = $self->param('foo', 'session', 'something new');
+    # sets value as well
+    
+
+=cut
+
 sub param {
-    my ( $self, $name, $type ) = @_;
+    my ( $self, $name, $type, $value ) = @_;
+    
+    if ($value) {
+        $self->cgi->param($name, $value)
+            if $type eq 'get' or $type eq 'post';
+        $self->session->param($name, $value)
+            if $type eq 'session';
+    }
+    
     if ( $name && $type ) {
         return (
                 $type eq 'get' ? $self->cgi->url_param($name)
@@ -886,1121 +2029,183 @@ sub param {
     }
 }
 
-sub sweet {
-    return SweetPea->new;
-}
+=head2 sweet
 
-1;
+I<the `sweet` method is shorthand for instantiating a new SweetPea object.>
 
-__END__
+sweet B<arguments>
 
-=head1 NAME
+=over 3
 
-SweetPea - A web framework that doesn't get in the way, or suck.
-
-=head1 VERSION
-
-Version 2.363
-
-=cut
-
-=head1 SYNOPSIS
-
-Oh how Sweet web application development can be ...
-
-    # start with a minimalist script
-    > sweetpea make --script
-    
-    use SweetPea;
-    sweet->routes({
-    
-        '/' => sub {
-            shift->forward('/way');
-        },
-        
-        '/way' => sub {
-            shift->html('I am the way the truth and the light!');
-        }
-        
-    })->run;
-    
-    # graduate to a ful-fledge application with scalable MVC architecture
-    # no refactoring required
-    > sweetpea make
-    
-    use SweetPea;
-    sweet->run;
-    
-    #look mom, auto-routes unless I tell it otherwise.
-
-=head1 DESCRIPTION
-
-SweetPea is a modern web application framework that follows the MVC (Model,
-View, Controller) design pattern using useful concepts from Mojolicious, Catalyst
-and other robust web frameworks. SweetPea has a short learning curve, is
-light-weight, as scalable as you need it to be, and requires little configuration.
-
-=head1 BASIC INSTALLATION
-
-Oh how Sweet web application development can be ...
-
-    ... using the cli (command line interface)
-    
-    # download, test and install
-    cpan SweetPea
-    
-    # build your skeleton application
-    cd web_server_root/htdocs/my_new_application
-    sweetpea make
-    
-That's all Folks, wait, SweetPea just got Sweeter.
-SweetPea now supports routes. Checkout this minimalist App.
-
-    ... in .pl
-    use SweetPea;
-    sweet->routes({
-    
-        '/' => sub {
-            shift->html('I took index.html\'s good, he got lazy.');
-        }
-        
-    })->run;
-
-=head1 EXPORTED
-
-    sweet (shortcut to SweetPea object instantiation)
-
-=head1 HOW IT WORKS
-
-SweetPea uses a simple MVC pattern and ideology for processing and
-responding to requests from the users browser. Here is an example
-request and response outlining how SweetPea behaves when a request
-is received.
-    
-    # The request
-    http://localhost/admin/auth/
-    - The user requests http://localhost/admin/auth/ from the browser.
-    
-    # The simple MVC pattern
-    http://localhost/(admin/auth/)
-    - admin/auth either matches as a Controller or Controller/Action.
-    - e.g. Controller::Admin::auth() or Controller::Admin::Auth::_index()
-    
-    # The response
-    - .pl (dispatcher/router) invokes SweetPea->new->run
-    - the run method loads all plugins and scans the controllers folder
-    building a table of controller/actions for further dispatching.
-    - the dispatching routine executes the global or local _begin method,
-    then executes the action or global or local _index method, and
-    finally executes the global or local _end method.
-    - the start and finish methods are then called to create, render
-    and finalize the response and output.
-    
-    # Other magic (not included)
-    * SweetPea will support routing which is a very popular way of
-    dispatching URLs. Using routes will disable the default method
-    of discovering controllers and actions making the application
-    more secure. SweetPea will default scanning the controllers
-    folder if no routes are defined.
-
-=head1 APPLICATION STRUCTURE
-
-    /static                 ## static content (html, css) is stored here
-    /sweet                  ## application files are stored here
-        /application        ## MVC files are stored here
-            /Controller     ## controllers are stored here
-                Root.pm     ## default controller (should always exist)
-                Sweet.pm    ## new application welcome page controller
-            /Model          ## models are stored here
-                Schema.pm   ## new application boiler-plate model 
-            /View           ## views are stored here
-                Main.pm     ## new application boiler-plate view
-        /sessions           ## auto-generated session files are stored here
-        /templates          ## templates and layouts can be stored here
-        App.pm              ## module for loading plugins (other modules)
-    /.htaccess              ## enables pretty-urls on apache w/mod-rewrite
-    /.pl                    ## default dispatcher (controller/action router)
-
-=head1 GENERATED FILES INFORMATION
-
-=head2 sweet/application/Controller/Root.pm
-
-I<Controller::Root>
-
-    The Root.pm controller is the default controller similar in function to
-    a directory index (e.g. index.html). When a request is received that can
-    not be matched in the controller/action table, the root/index
-    (or Controller::Root::_index) method is invoked. This makes the _index
-    method of Controller::Root, a kind of global fail-safe or fall back
-    method.
-    
-    The _begin method is executed before the requested action, if no action
-    is specified in the request the _index method is used, The _end method
-    is invoked after the requested action or _index method has been
-    executed.
-    
-    The _begin, _index, and _end methods can exist in any controller and
-    serves the same purposes described here. During application request
-    processing, these special routines are checked for in the namespace of
-    the current requested action's Controller, if they are not found then
-    the (global) alternative found in the Controller::Root namespace will
-    be used.
-
-    The _startup method is a special global method that cannot be overridden
-    and is executed first with each request. The _shutdown is executed last
-    and cannot be overridden either.
-
-    # in Controller/Root.pm
-    package Controller::Root;
-    sub _startup { my ( $self, $s ) = @_; }
-    sub _begin { my ( $self, $s ) = @_; }
-    sub _index { my ( $self, $s ) = @_; }
-    sub _end { my ( $self, $s ) = @_; }
-    sub _shutdown { my ( $self, $s ) = @_; }
-    1;
-
-=head2 sweet/application/Controller/Sweet.pm
-
-I<Controller::Sweet>
-
-    # Sweet.pm
-    * A welcome page for the newly created application. (Safe to delete)
-
-=head2 sweet/application/Model/Schema.pm
-
-I<Model::Schema>
-
-    # Model/Schema.pm
-    The Model::Schema boiler-plate model package is were your data
-    connection, accessors, etc can be placed. SweetPea does not impose
-    a specific configuration style, please feel free to connect to your
-    data in the best possible fashion. Here is an example of how one
-    might use this empty package with DBIx::Class.
-    
-    # in Model/Schema.pm
-    package Model::Schema;
-    use base qw/DBIx::Class::Schema::Loader/;
-    __PACKAGE__->loader_options(debug=>1);
-    1;
-    
-    # in App.pm
-    use Model::Schema;
-    sub plugins {
-        ...
-        $s->plug('data', sub { shift; return Model::Schema->new(@_) });
-    }
-    
-    # example usage in Controller/Root.pm
-    sub _dbconnect {
-        my ($self, $s) = @_;
-        $s->data->connect($dbi_dsn, $user, $pass, \%dbi_params);
-    }
-
-=head2 sweet/application/View/Main.pm
-
-I<View::Main>
-
-    # View/Main.pm
-    The View::Main boiler-plate view package is were your layout/template
-    accessors and renders might be stored. Each view is in fact a package
-    that determines how data should be rendered back to the user in
-    response to the request. Examples of different views are as follows:
-    
-    View::Main - Main view package that renders layouts and templates
-    based on the main application's user interface design.
-    
-    View::Email::HTML - A view package which renders templates to
-    be emailed as HTML.
-    
-    View::Email::TEXT - A view package which renders templates to be
-    emailed as plain text.
-    
-    Here is an example of how one might use this empty
-    package with Template (template toolkit).
-    
-    # in View/Main.pm
-    package View::Main;
-    use base Template;
-    sub new {
-        return __PACKAGE__->new({
-        INCLUDE_PATH => 'sweet/templates/',
-        EVAL_PERL    => 1,
-        });
-    }
-    1;
-    
-    # in App.pm
-    use View::Main;
-    sub plugins {
-        ...
-        $s->plug('view', sub{ shift; return View::Main->new(@_) });
-    }
-    
-    # example usage in Controller/Root.pm
-    sub _index {
-        my ($self, $s) = @_;
-        $s->view->process($input, { s => $s });
-    }    
-    
-=head2 sweet/application/App.pm
-
-I<App>
-
-    # App.pm
-    The App application package is the developers access point to
-    configure and extend the application before request processing. This
-    is typically done using the plugins method. This package contains
-    the special and required plugins method. Inside the plugins method is
-    were other Modules are loaded and Module accessors are created using
-    the core "plug" method. The following is an example of App.pm usage.
-    
-    package App;
-    use warnings;
-    use strict;
-    use HTML::FormFu;
-    use HTML::GridFu;
-    use Model::Schema;
-    use View::Main;
-    
-    sub plugins {
-        my ( $class, $s ) = @_;
-        my $self = bless {}, $class;
-        $s->plug( 'form', sub { shift; return HTML::FormFu->new(@_) } );
-        $s->plug( 'data', sub { shift; return Model::Schema->new(@_) } );
-        $s->plug( 'view', sub { shift; return View::Main->new(@_) } );
-        $s->plug( 'grid', sub { shift; return HTML::GridFu->new(@_) } );
-        return $s;
-    }
-    1;    # End of App
-
-=head2 .htaccess
-
-I<htaccess>
-
-    # .htaccess
-    The .htaccess file allows apache-type web servers that support
-    mod-rewrite to automatically configure your application environment.
-    Using mod-rewrite your application can make use of pretty-urls. The
-    requirements for using .htaccess files with your SweetPea application
-    are as follows:
-    
-    mod-rewrite support
-    .htaccess support with Allow, Deny
-    
-    # in .htaccess
-    DirectoryIndex .pl
-    AddHandler cgi-script .pl .pm .cgi
-    Options +ExecCGI +FollowSymLinks -Indexes
-    
-    RewriteEngine On
-    RewriteCond %{SCRIPT_FILENAME} !-d
-    RewriteCond %{SCRIPT_FILENAME} !-f
-    RewriteRule (.*) .pl/$1 [L]
-
-=head2 .pl
-
-I<pl>
-
-    # .pl
-    The .pl file is the main application router/dispatcher. It is
-    responsible for prepairing the application via executing all pre and
-    post processing routines as well as directing requests to the
-    appropriate controllers and actions.
-    
-    #!/usr/env/perl
-    BEGIN {
-        use FindBin;
-        use lib $FindBin::Bin . '/sweet';
-        use lib $FindBin::Bin . '/sweet/application';
-    }
-    use SweetPea;
-    use App;
-    SweetPea->new->run;
-
-
-=head1 SPECIAL ROUTINES
-
-=head2 _startup
-
-    # _startup
-    sub _startup {...}
-    The _startup method is a special global method that cannot be overridden
-    and is executed before any other methods automatically with each request.
-
-=head2 _begin
-
-    # _begin
-    sub _begin {...}
-    
-    The begin method can exist both globally and locally, and will be
-    automatically invoked per request. When a request is processed,
-    SweetPea checks whether the _begin method exists in the namespace
-    of the Controller being requested, if not it checks whether the
-    _begin method exists in the Controller::Root namespace and
-    executes that method. If you opt to keep and use the default
-    controller Controller::Root, then its _begin method will be
-    defined as the global _begin method and will be executed
-    automatically with each request. The automatic execution of
-    _begin in Controller::Root can be overridden by adding a _begin
-    method to the namespace of the controller to be requested.
-    
-    This special method is useful for checking user permissions, etc.
-
-=head2 _index
-
-    # _index
-    sub _index {...}
-    
-    The index method can exist both globally and locally, and will
-    be automatically invoked *only* if an action is not specified.
-    When a request is processed, SweetPea scans the controllers
-    folder building a table of controllers and actions for
-    dispatching. The dispatching routine executes attempts to
-    execute the action, if no action is specified, it
-    default to executing the global or local _index method
-    looking locally first, then globally ofcourse. The automatic
-    execution of _index in Controller::Root can be overridden by
-    adding a _index method to the namespace of the controller to
-    be requested.
-    
-    This special method acts as a directory index or index.html
-    file in that it is executed when no other file (action) is
-    specified.
-    
-=head2 _end
-
-    # _end
-    sub _end {...}
-    
-    The end method can exist both globally and locally, and will be
-    automatically invoked per request. When a request is processed,
-    SweetPea checks whether the _end method exists in the namespace
-    of the Controller being requested, if not it checks whether the
-    _end method exists in the Controller::Root namespace and
-    executes that method. If you opt to keep and use the default
-    controller Controller::Root, then its _end method will be
-    defined as the global _end method and will be executed
-    automatically with each request. The automatic execution of
-    _end in Controller::Root can be overridden by adding a _end
-    method to the namespace of the controller to be requested.
-    
-    This special method is useful for performing cleanup
-    functions at the end of a request.
-
-=head2 _shutdown
-
-    # _shutdown
-    sub _shutdown {...}
-    The _shutdown method is a special global method that cannot be overridden
-    and is executed after all other methods automatically with each request.
-
-=head1 RULES AND SYNTAX
-
-=head2 The anatomy of a controller method
-
-    Controllers are used by SweetPea in an OO (object-oriented)
-    fashion and thus, all controller methods should follow the
-    same design as they are passed the same parameters.
-    
-    package Controller::Foo;
-    
-    sub bar {
-        my ($self, $s) = @_;
-        ...
-    }
-    
-    1;
-    
-    The foo method above (as well as al other controller methods)
-    are passed at least two objects, an instance of the current
-    controller usually referred to as $self, and an instance of
-    the SweetPea application object usually referred to as $s.
-    
-    Note! Actions prefixed with an underscore can not be
-    displatched to using URLs.
-    
-=head2 How to use plugins (other modules)
-
-    Plugins are a great way to extend the functionality of a
-    SweetPea application. Plugins are defined in the application
-    package App.pm inside of the special plugins method as
-    follows:
-    
-    # inside of App.pm
-    package App;
-    ...
-    use CPAN::Module;
-    
-    sub plugins {
-        ...
-        $s->plug( 'cpan', sub { shift; return CPAN::Module->new(@_) } );
-        return $s;
-    }
-    ...
-    
-    # notice below how an accessor is created for the ficticious
-    CPAN::Module in the SweetPea namespace
-    
-    # inside sweet/Controller/MyController.pm
-    sub _index {
-        my ($self, $s) = @_;
-        $s->cpan->some_method(...);
-    }
-    
-    # when $s->cpan is called, it creates (unless the object reference
-    exists) and returns a reference to that module object. To create
-    or initialize another object, simply call the unplu method on the
-    object's name.
-    
-    # inside sweet/Controller/MyController.pm
-    sub _index {
-        my ($self, $s) = @_;
-        my $foo = $s->cpan;
-        my $bar = $s->cpan;
-        my $baz = $s->unplug('cpan')->cpan;
-    }
-    
-    # in the example above, $foo and $bar hold the same reference, but
-    $baz is holding a new refernce as if it called CPAN::Module->new;
-
-=head1 INSTANTIATION
-
-=head2 new
-
-    The new method initializes a new SweetPea object.
-    
-    # in your .pl or other index/router file
-    my $s = SweetPea->new;
-
-=head2 run
-
-    The run method discovers
-    controllers and actions and executes internal pre and post request processing
-    routines.
-
-    # in your .pl or other index/router file
-    my $s = SweetPea->new->run; # start processing the request
-    
-    NOTE! CGI, CGI::Cookie, and CGI::Session are plugged in automatically
-    by the run method.
-    
-    # accessible via $s->cgi, $s->cookie, and $s->session
-
-=cut
-
-=head1 ROUTING/DISPATCHING
-
-    The routes method like most popular routing mechanisms allows you to map
-    urls to routines. SweetPea by default uses an auto-discovery mechanism on
-    the controllers folder to create routes automatically, however there are
-    times when additional flexibility is required.
-    
-    There are two types of routes defined when your application is executed,
-    auto-routing and manual routing. As stated before, auto-routing
-    automatically builds routes base on the Controllers in your applications
-    controllers folder (which is created automatically when you "make" an app
-    using the sweetpea cli). Manual routing is usually established in the
-    dispatcher file as follows:
-    
-    sweet->routes({
-        
-        '/' => sub {
-            shift->html('Index page much!');
-        }
-        
-    })->new;
-    
-    SweetPea routing has support for inline URL parameters and wildcard
-    operators. See examples below:
-    
-    sweet->routes({
-        
-        '/:goto' => sub {
-            my $s = shift;
-            $s->html('Your trying to get to ' . $s->param('goto') );
-            ...
-        },
-        '/download/*' => sub {
-            my $s = shift;
-            $s->redirect($s->param('*')) if $s->param('*');
-            ...
-        },
-        '/dl/:file/:from' => sub {
-            my $s = shift;
-            if ($s->param('file')) {
-                my $contents = $s->file('<',
-                    $s->param('from') . '/' . $s->param('file');
-                );
-            }
-            ...
-        }
-        
-    })->run;
-
-=cut
-
-=head1 CONTROLLERS AND ACTIONS
-
-    Controllers are always created in the sweet/controller folder and defined
-    under the Controller namespace, e.g. Controller::MyController. In keeping
-    with simplicity, controllers and actions are actually packages and
-    routines ( controller/action = package controller; sub action {...} ).
-    
-    NOTE! Actions prefixed with an underscore e.g. _foo can not be dispatched to
-    using URLs but are listed in the dispatch table and are available to
-    the forward, detach and many other methods that might invoke an
-    action/method.
-
-=head1 RAD METHODS
-
-RAD (Rapid Application Development) methods assist in the creation
-of common files, objects and funtionality. These methods reduce the tedium
-that comes with creating web applications models, views and controllers.
-
-=head2 make
-
-    This function is available through the command-line interface.
-    This creates the boiler plate appication structure.
-    
-    # e.g. at the command line
-    sweetpea make
-    > Created file /sweet/App.pm (chmod 755) ...
-    > Created file /.pl (chmod 755) ...
-    > Created file /.htaccess (chmod 755) ...
-    > Creat....
-    > ...
-
-=cut
-
-=head2 ctrl
-
-    This function is available through the command-line interface.
-    This method creates a controller with a boiler plate structure
-    and global begin, index, and end methods.
-    
-    # e.g. at the command line
-    sweetpea ctrl admin/auth
-    > Created file /sweet/application/Controller/Admin/Auth.pm (chmod 755) ...
-
-=cut
-
-=head2 model
-
-    This function is available through the command-line interface.
-    This method creates a model with a boiler plate structure.
-    
-    # e.g. at the command line
-    sweetpea model csv/upload
-    > Created file /sweet/application/Model/Csv/Upload.pm (chmod 755) ...
-
-=cut
-
-=head2 view
-
-    This function is available through the command-line interface.
-    This method creates a view with a boiler plate structure.
-    
-    # e.g. at the command line
-    sweetpea view email/html
-    > Created file /sweet/application/View/Email/Html.pm (chmod 755) ...
-
-=cut
-
-=head1 HELPER METHODS
-
-=head2 controller
-
-    The action method returns the current requested MVC
-    controller/package.
-    
-    # user requested http://localhost/admin/auth
-    
-    $controller = $s->controller
-    # $controller is /admin
-    
-    $controller = $s->controller('services');
-    # $controller is /admin/services
-    
-    # maybe useful for saying
-    
-    $s->forward( $s->controller('services') );
-    # executes Controller::Admin::services()
-
-=cut
-
-=head2 action
-
-    The action method returns the current requested MVC
-    action.
-    
-    # user requested http://localhost/admin/auth
-    
-    $action = $s->action
-    # $action is auth if auth is an action, blank if not
-
-=cut
-
-=head2 url/uri
-
-    The url/uri methods returns a completed URI string
-    or reference to root, here or path variables, e.g.
-    
-    # user requested http://localhost/admin/auth
-    
-    my $link = $s->url('static/index.html');
-    # $link is http://localhost/static/index.html
-    
-    # $s->uri->{root} is http://localhost
-    # $s->uri->{here} is http://localhost/admin/auth
-    # $s->uri->{path} is /admin/auth
-
-=cut
-
-=head2 path
-
-    The path method returns a completed path to root
-    or location passed to the path method.
-    
-    # application lives at /domains/sweetapp
-    
-    my $path = $s->path;
-    # $path is /domains/sweetapp
-    
-    my $path = $s->path('static/index.html');
-    # $path is /domains/sweetapp/static/index.html
-
-=cut
-
-=head2 cookies
-
-    Returns an array of cookies set throughout the request.
-    ...
-    foreach my $cookie (@{$s->cookies}) {
-        # do something with the cookie data
-    }
-
-=cut
-
-=head2 param
-
-    The param methods is an all purpose shortcut to accessing CGI's url_param,
-    param (post param method), and CGI::Session's param methods in that order.
-    Convenient when all params have unique names.
-
-=cut
-
-=head1 CONTROL METHODS
-
-=head2 start
-
-    The start method should probably be named (startup) because
-    it is the method which processes the request and performs
-    various startup tasks.
-    
-    # is invoked automatically
-
-=cut
-
-=head2 finish
-
-    The finish method performs various tasks in processing the
-    response to the request.
-    
-    # is invoked automatically
-
-=cut
-
-=head2 forward
-
-    The forward method executes a method in a namespace,
-    then continues to execute instructions in the method it was
-    called from.
-    
-    # in Controller::Admin
-    sub auth {
-        my ($self, $s) = @_;
-        $s->forward('/admin/auth_success');
-        # now im doing something else
-    }
-    
-    sub auth_success {
-        my ($self, $s) = @_;
-        # im doing something
-    }
-    
-    using forward to here was inefficient, one could have used
-    $self->auth_success($s) because we are in the same package.
-
-=cut
-
-=head2 detach
-
-    The detach method executes a method in a namespace, then
-    immediately executes the special "_end" method which finalizes
-    the request.
-    
-    # in Controller::Admin
-    sub auth {
-        my ($self, $s) = @_;
-        $s->detach('/admin/auth_success');
-        # nothing after is executed
-    }
-    
-    sub auth_success {
-        my ($self, $s) = @_;
-        # im doing something
-    }
-    
-    using forward to here was inefficient, one could have used
-    $self->auth_success($s) because we are in the same package.
-
-=cut
-
-=head1 METHODS
-
-=head2 store
-
-    The store method is an accessor to the special "store"
-    hashref. The store hashref is the functional equivilent
-    of the stash method found in many other frameworks. It
-    serves as place developers can save and retreive information
-    throughout the request.
-    
-    $s->store->{important_stuff} = "This is top secret stuff";
-
-=cut
-
-=head2 application
-
-    The application method is in accessor to the special
-    "application" hashref. As the "store" hashref is where general
-    application data is stored, the "application" hashref is where
-    application configuration information is stored.
-    
-    $s->application->{content_type} = 'text/html';
-    
-    This is just an example, to change the content type please use
-    $s->content_type('text/html');
-    Content-Type is always 'text/html' by default.
-
-=cut
-
-=head2 content_type
-
-    The content_type method set the desired output format for use
-    with http response headers.
-    
-    $s->content_type('text/html');
-
-=cut
-
-=head2 request_method
-
-    The request_method return the valu set in the REQUEST_METHOD
-    Environment Variable and is generally used as follows:
-    
-    if ( $s->request_method eq 'get' ) {
-        ...
-    }
-    
-    Alternatively, for testing purposes, the request_method method can be
-    use to return a boolean true or false based on whether the supplied
-    value matches the current value in the REQUEST_METHOD Environment
-    Variable.
-    
-    if ( $s->request('get')) {
-        ...
-    }
-
-=cut
-
-=head2 request
-
-    The request method is an alias for request_method.
-
-=cut
-
-=head2 file
-
-    The file method assists in creating, editing and deleting files on the
-    file system without the to need to create and close file handles manually.
-    
-    $s->file('>', 'somefile.txt', $data);  # write
-    $s->file('>>', 'somefile.txt', $data); # append
-    $s->file('<', 'somefile.txt');  # read
-    $s->file('x', 'somefile.txt');  # delete
-    
-
-=cut
-
-=head2 push_download
-
-    The push_download method when used prompts the user to download the
-    specified file without redirect.
-    
-    $s->push_download('test.txt');
-
-=cut
-
-=head2 flash
-
-    The flash method provides the ability to pass a single string of data
-    from request "A" to request "B", then that data is deleted as to prevent
-    it from being passed to any additional requests.
-    
-    # set flash message
-    my $message = $s->flash('This is a test flash message');
-    # $message equals 'This is a test flash message'
-    
-    # get flash message
-    my $message = $s->flash();
-    # $message equals 'This is a test flash message'
-    
-    # clear flash message
-    my $message = $s->flash('');
-    # returns previous message then clears, $message equals ""
-
-=cut
-
-=head2 html
-
-    The html method sets data to be output to the browser or if
-    called with no parameters returns the data recorded and
-    clears the data store.
-    
-    If the html store contains any data at the end of the request,
-    it is output to the browser.
-    
-    # in Controller::Root
-    sub _index {
-        my ($self, $s) = @_;
-        $s->html('this is a test');
-        $self->my_two_cents($s);
-    }
-    
-    sub my_two_cents {
-        my ($self, $s) = @_;
-        $s->html(', or maybe not');
-    }
-    
-    "this is a test, or maybe not" is output to the browser
-    
-    # in Controller::Root
-    
-    my @data;
-    
-    sub _index {
-        my ($self, $s) = @_;
-        $s->html('this is a test');
-        $self->forget_it($s);
-    }
-    
-    sub forget_it {
-        my ($self, $s) = @_;
-        @data = @{$s->html};
-    }
-    
-    Nothing is output to the browser as $s->html returns and
-    array of data stored in it and clears itself
-    
-    # @data contains ['this is a test','or maybe not']
-
-=cut
-
-=head2 upload
-
-    The upload method copies a file from the users computer to the server
-    with the option of renaming the file.
-    
-    my $file = $s->upload('input_file_field');
-    my $file = $s->upload('input_file_field', 'location');
-    my $file = $s->upload('input_file_field', 'location', 'new_file_name');
-
-=cut
-
-=head2 debug
-
-    The debug method sets data to be output to the browser with
-    additional information for debugging purposes or if called
-    with no parameters returns the data recorded and clears the
-    data store. debug() is the functional equivilent of html()
-    but with a different purpose.
-
-=cut
-
-=head2 output
-
-    This method spits out html or debug information stored using
-    $s->html and/or $s->debug methods throughout the request. The
-    output method takes one argument, an entry seperator, which
-    if defined (empty or not) will output debug data, if not
-    explicitly defined will output html data.
-    
-    $s->output;
-    # outputs html data.
-    
-    $s->output(""); or $s->output("\n"); or $s->output("<br/>");
-    # outputs debug data.
-
-=cut
-
-=head2 redirect
-
-    This method redirects the request to the supplied url. If no url
-    is supplied, the request is redirected to the default page as defined
-    in your .htaccess or controller/Root.pm file.
-
-=cut
-
-=head2 plug
-
-    The plugin method creates accessors for third party (non-core)
-    modules, e.g.
-    
-    $self->plug('email', sub{ shift; return Email::Stuff->new(@_) });
-    
-    # allow you to to say
-    # in Controller::Root
-    
-    sub _index {
-        my ($self, $s) = @_;
-        $self->email->to(...)->from(...)->etc...
-    }
-    
-    
-    # NOTE! plugins should be defined within the plugins methods of
-    the App.pm package;
-
-=cut
-
-=head2 unplug
-
-    The unplug method releases the reference to the module object
-    used by the module accessor created by the plug method.
-    
-    # inside sweet/Controller/MyController.pm
-    sub _index {
-        my ($self, $s) = @_;
-        my $foo = $s->cpan;
-        my $bar = $s->cpan;
-        my $baz = $s->unplug('cpan')->cpan;
-    }
-    
-    # in the example above, $foo and $bar hold the same reference, but
-    $baz is holding a new refernce as if it called CPAN::Module->new;
-    as defined in the plugins method in App.pm
-
-=cut
-
-=head2 routes
-
-    The routes method like most popular routing mechanisms allows you to map
-    urls to routines. SweetPea by default uses an auto-discovery mechanism on
-    the controllers folder to create routes automatically, however there are
-    times when additional flexibility is required. This is where the routes
-    method is particularly useful, also the routes method supports inline
-    url parameters e.g. http:/localhost/route/param1/param2. The easiest way
-    to use the routes method is from within the dispatcher (.pl file).
-    
-    # ... in the .pl file
-    # new
-    sweet->routes({
-    
-        '/:caption' => sub {
-            my $s = shift;
-            $s->html('Hello World, ' . $s->param('caption'));
-        }
-        
-    })->run;
-    
-    #old
-    SweetPea->new->routes({
-
-        '/:caption' => sub {
-            my $s = shift;
-            $s->html('Hello World, ' . $s->param('caption'));
-        },
-        '/:caption/:name' => sub {
-            my $s = shift;
-            $s->html('Hello World, ' . $s->param('caption') .
-            ' my name is ' . $s->param('name')
-            );
-        }
-
-    })->run;
-    
-    It is very important to understand the sophisticated routing SweetPea
-    performs and how it scales with your application over its lifecycle as
-    you add more routes and controllers.
-    
-    There are two types of routes defined when your application is executed,
-    auto-routing and manual routing. As stated before, auto-routing
-    automatically builds routes base on the Controllers in your applications
-    controllers folder. Manual routing is usually established in the dispatcher
-    file as outlined above. Manually created routes take priority over
-    automatically generated ones, so if an automatically generated route exists
-    that occupies the path of a manually defined one, the manually create one
-    will be override the automatically created one.
-
-=cut
-
-=head1 AUTHOR
-
-Al Newkirk, C<< <al.newkirk at awnstudio.com> >> on irc as perletc or awnstudio
-
-=head1 BUGS
-
-Please report any bugs or feature requests to
-C<bug-sweetpea at rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SweetPea>. I will be notified,
-and then you'll automatically be notified of progress on
-your bug as I make changes.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc sweetpea
-    perldoc SweetPea or perldoc SweetPea.pm
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=SweetPea>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/SweetPea>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/SweetPea>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/SweetPea/>
+=item L<options|/"\%options">
 
 =back
 
+sweet B<usage and syntax>
 
-=head1 ACKNOWLEDGEMENTS
-
-Thanks to all the developers of Mojolicious and Catalyst that inspired this.
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009 Al Newkirk.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
-
-See http://dev.perl.org/licenses/ for more information.
-
+    $self = sweet;
+    
+    takes 1 argument
+        1st argument  - optional
+            \%options - sweetpea runtime options
+            
+    example:
+    my $s = sweet;
+    my $s = sweet({ session_folder => '/tmp' });
 
 =cut
 
-# End of SweetPea
+sub sweet {
+    return SweetPea->new(@_);
+}
+
+=head1 VARIABLE LEGEND
+
+=head2 \%actions
+
+    my $routes = {
+        '/url_path' => sub {
+            $sweetpea_object = shift;
+            ...
+        },
+        'other_url_path' => sub {
+            $sweetpea_object = shift;
+            ...
+        }
+    };
+    
+=head2 \%options
+
+    my $sweetpea_runtime_options = {
+        local_session => 1,
+        session_folder => '/tmp/site1'
+    };
+
+=head2 $route
+
+    my $route = '/'; # index/default page
+    my $route = '/contact'; # good
+    my $route = 'contact'; # bad
+
+=head2 $self
+
+    my $self = sweet; # a SweetPea object
+    my $self = SweetPea->new;
+
+=head2 @data
+
+    my @data = qw(this is a test);
+    # a simple array of data to be stored
+
+=head2 $url
+
+    my $url = '/path/under/application/root/'; # good
+    my $url = 'http://www.somesite.com/path/under/blah'; #bad
+
+=head2 $content_type
+
+    my $content_type = 'text/html';
+    my $content_type = 'text/plain';
+    # etc
+
+=head2 $method
+
+    my $method = 'get'; # valid request method
+    my $method = 'post'; # valid request method
+    my $method = 'put'; # valid request method
+    # etc
+
+=head2 $file_or_data
+
+    my $file_or_data = 'c:\tmp\file.txt'; # cool
+    my $file_or_data = '/tmp/file.txt'; # good
+    my $file_or_data = 'this is some content'; # works
+    
+    my $file_or_data = sweet->file('<', 'file.txt'); #bad
+    my $file_or_data = join "\n", sweet->file('<', 'file.txt'); #better
+
+=head2 $path
+
+    my $path = 'c:\tmp\file.txt'; # bad
+    my $path = '/tmp/file.txt'; # bad
+    my $path = '/under/application/root'; # yes, very nice
+    my $path = 'under/application/root'; # works as well
+
+=head2 $flash_message
+
+    my $flash_message = 'anything you need to convey to the user';
+
+=head2 $flash_type
+
+    my $flash_type = 'info'; #good
+    my $flash_type = 'warn'; #good
+    my $flash_type = 'error'; #good
+    my $flash_type = 'success'; #good
+    my $flash_type = 'blah'; #bad
+
+=head2 $filemode
+
+    my $filemode = 0666; # good
+    my $filemode = 0777; #good
+    my $filemode = 755; # bad
+    my $filemode = 'catdog'; #bad
+
+=head2 $filename
+
+    my $filename = 'c:\tmp\file.txt'; # cool
+    my $filename = '/tmp/file.txt'; # good
+
+=head2 $output_what
+
+    my $output_what = 'html'; # good
+    my $output_what = 'debug'; # good
+    my $output_what = 'textile'; # bad
+
+=head2 $output_where
+
+    my $output_where = 'web'; # good
+    my $output_where = 'cli'; # bad
+
+=head2 $seperator
+
+    my $seperator = 'whatever'; # works, makes no sense though
+    my $seperator = ',';
+    my $seperator = "\n";
+    my $seperator = "\r\n"; # windows
+    my $seperator = "\t";
+
+=head2 $accessor_name
+
+    my $accessor_name = 'math'; # good
+    my $accessor_name = 'math_calc'; # good
+    my $accessor_name = '_math_calc'; # ok
+    
+    my $accessor_name = '132'; # bad
+    my $accessor_name = 'math-calc'; # very bad
+
+=head2 $code_ref
+
+    my $code_ref = sub {
+        my $sweetpea = shift; # always the first object
+        ...
+    };
+
+=head2 $param_name
+
+    my $param_name = 'whatever';
+
+=head2 $param_type
+
+    my $param_type = 'get'; # good
+    my $param_type = 'post'; # good
+    my $param_type = 'session'; # good
+    
+    my $param_type = 'csv'; # bad
+
+=head2 $param_value
+
+    my $param_value = 'whatever';
+
+=cut
+
+1; # End of SweetPea

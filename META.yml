@@ -1,27 +1,28 @@
----
+--- #YAML:1.0
+name:               SweetPea
+version:            2.364
+abstract:           A web framework that doesn't get in the way, or suck.
 author:
-  - 'Al Newkirk <al.newkirk@awnstudio.com>'
-build_requires:
-  ExtUtils::MakeMaker: 6.42
+    - Al Newkirk <al.newkirk@awnstudio.com>
+license:            perl
+distribution_type:  module
 configure_requires:
-  ExtUtils::MakeMaker: 6.42
-distribution_type: module
-generated_by: 'Module::Install version 0.91'
-license: Perl
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
-module_name: SweetPea
-name: SweetPea
-no_index:
-  directory:
-    - inc
-    - t
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
 requires:
-  CGI: 0
-  CGI::Cookie: 0
-  CGI::Session: 0
-  App::Rad: 0
-  Test::More: 0
-version: 2.33
-
+    CGI:           0
+    CGI::Cookie:   0
+    CGI::Session:  0
+    perl:          5.006
+    Test::More:    0
+resources:
+    repository:  http://github.com/awnstudio/SweetPea
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.55_02
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

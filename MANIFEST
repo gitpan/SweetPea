@@ -1,16 +1,10 @@
 Changes
 ignore.txt
-inc/Module/Install.pm
-inc/Module/Install/Base.pm
-inc/Module/Install/Makefile.pm
-inc/Module/Install/MakeMaker.pm
-inc/Module/Install/Metadata.pm
 lib/SweetPea.pm
 Makefile.PL
 MANIFEST
 META.yml
 README
-script/sweetpea
 t/00-load.t
 t/02-routes-iup-level-1.t
 t/02-routes-iup-level-2.t
