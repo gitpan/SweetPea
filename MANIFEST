@@ -1,6 +1,7 @@
 Changes
 ignore.txt
 lib/SweetPea.pm
+lib/SweetPea/Overview.pod
 Makefile.PL
 MANIFEST
 META.yml

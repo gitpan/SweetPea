@@ -21,11 +21,11 @@ use File::Find;
 
 =head1 VERSION
 
-Version 2.364
+Version 2.365
 
 =cut
 
-our $VERSION = '2.364';
+our $VERSION = '2.365';
 
 =head1 DESCRIPTION
 
@@ -364,8 +364,7 @@ sub _plugins {
                         $opts->{Directory} = "$session_folder/tmp";
                     }    
                 }
-                if ($self->{store}->{application}->{local_session}
-                    && !$opts->{Directory}) {
+                if ($self->{store}->{application}->{local_session}) {
                     mkdir "sweet"
                     unless -e
                     "$self->{store}->{application}->{path}/sweet";
@@ -1470,9 +1469,9 @@ sub flash {
     }
     
     # prepare for return value
-    if ((lc($type) eq 'info' || lc($type) eq 'warn'
-    || lc($type) eq 'error'  || lc($type) eq 'success')
-    || ($type && $store && !$message)) {
+    if (((lc($type) eq 'info' || lc($type) eq 'warn'
+    || lc($type) eq 'error'  || lc($type) eq 'success'))
+    && ($type && $store && !$message)) {
         $message = '';
     }
     
