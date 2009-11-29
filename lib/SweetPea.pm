@@ -21,11 +21,11 @@ use File::Find;
 
 =head1 VERSION
 
-Version 2.366
+Version 2.3661
 
 =cut
 
-our $VERSION = '2.366';
+our $VERSION = '2.3661';
 
 =head1 DESCRIPTION
 
@@ -57,7 +57,7 @@ Oh how Sweet web application development can be ...
 
 =head1 NOTICE!
 
-This POD is being re-written may appear incomplete. If so please refer to
+This POD is being rewritten and may appear incomplete. If so please refer to
 L<SweetPea::Overview> for the original documentation, keep in mind that
 the original documentation may/is probably out-dated.
 

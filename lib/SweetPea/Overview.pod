@@ -1,6 +1,17 @@
 =head1 NAME
 
-SweetPea - A web framework that doesn't get in the way, or suck.
+SweetPea::Overview - A web framework that doesn't get in the way, or suck.
+
+=head1 NOTICE!
+
+This POD is being rewritten and is probably out-dated. If so please refer
+to L<SweetPea> for the current documentation, keep in mind that as this 
+module is new and undergoing active development, the documentation
+is subject to change without notice.
+
+Also Note!
+The sweetpea application generator script has been moved to
+L<SweetPea::Cli> and the usage and syntax has changed a bit.
 
 =head1 SYNOPSIS
 
