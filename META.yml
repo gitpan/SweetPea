@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               SweetPea
-version:            2.365
+version:            2.366
 abstract:           A web framework that doesn't get in the way, or suck.
 author:
     - Al Newkirk <al.newkirk@awnstudio.com>

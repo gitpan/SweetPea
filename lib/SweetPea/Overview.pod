@@ -2,12 +2,6 @@
 
 SweetPea - A web framework that doesn't get in the way, or suck.
 
-=head1 VERSION
-
-Version 2.364
-
-=cut
-
 =head1 SYNOPSIS
 
 Oh how Sweet web application development can be ...
@@ -490,8 +484,6 @@ I<pl>
     
     # accessible via $s->cgi, $s->cookie, and $s->session
 
-=cut
-
 =head1 ROUTING/DISPATCHING
 
     The routes method like most popular routing mechanisms allows you to map
@@ -541,8 +533,6 @@ I<pl>
         
     })->run;
 
-=cut
-
 =head1 CONTROLLERS AND ACTIONS
 
     Controllers are always created in the sweet/controller folder and defined
@@ -574,8 +564,6 @@ that comes with creating web applications models, views and controllers.
     > Creat....
     > ...
 
-=cut
-
 =head2 ctrl
 
     This function is available through the command-line interface.
@@ -586,8 +574,6 @@ that comes with creating web applications models, views and controllers.
     sweetpea ctrl admin/auth
     > Created file /sweet/application/Controller/Admin/Auth.pm (chmod 755) ...
 
-=cut
-
 =head2 model
 
     This function is available through the command-line interface.
@@ -597,8 +583,6 @@ that comes with creating web applications models, views and controllers.
     sweetpea model csv/upload
     > Created file /sweet/application/Model/Csv/Upload.pm (chmod 755) ...
 
-=cut
-
 =head2 view
 
     This function is available through the command-line interface.
@@ -607,8 +591,6 @@ that comes with creating web applications models, views and controllers.
     # e.g. at the command line
     sweetpea view email/html
     > Created file /sweet/application/View/Email/Html.pm (chmod 755) ...
-
-=cut
 
 =head1 HELPER METHODS
 
@@ -630,8 +612,6 @@ that comes with creating web applications models, views and controllers.
     $s->forward( $s->controller('services') );
     # executes Controller::Admin::services()
 
-=cut
-
 =head2 action
 
     The action method returns the current requested MVC
@@ -641,8 +621,6 @@ that comes with creating web applications models, views and controllers.
     
     $action = $s->action
     # $action is auth if auth is an action, blank if not
-
-=cut
 
 =head2 url/uri
 
@@ -658,8 +636,6 @@ that comes with creating web applications models, views and controllers.
     # $s->uri->{here} is http://localhost/admin/auth
     # $s->uri->{path} is /admin/auth
 
-=cut
-
 =head2 path
 
     The path method returns a completed path to root
@@ -673,8 +649,6 @@ that comes with creating web applications models, views and controllers.
     my $path = $s->path('static/index.html');
     # $path is /domains/sweetapp/static/index.html
 
-=cut
-
 =head2 cookies
 
     Returns an array of cookies set throughout the request.
@@ -683,15 +657,11 @@ that comes with creating web applications models, views and controllers.
         # do something with the cookie data
     }
 
-=cut
-
 =head2 param
 
     The param methods is an all purpose shortcut to accessing CGI's url_param,
     param (post param method), and CGI::Session's param methods in that order.
     Convenient when all params have unique names.
-
-=cut
 
 =head1 CONTROL METHODS
 
@@ -703,16 +673,12 @@ that comes with creating web applications models, views and controllers.
     
     # is invoked automatically
 
-=cut
-
 =head2 finish
 
     The finish method performs various tasks in processing the
     response to the request.
     
     # is invoked automatically
-
-=cut
 
 =head2 forward
 
@@ -735,8 +701,6 @@ that comes with creating web applications models, views and controllers.
     using forward to here was inefficient, one could have used
     $self->auth_success($s) because we are in the same package.
 
-=cut
-
 =head2 detach
 
     The detach method executes a method in a namespace, then
@@ -758,8 +722,6 @@ that comes with creating web applications models, views and controllers.
     using forward to here was inefficient, one could have used
     $self->auth_success($s) because we are in the same package.
 
-=cut
-
 =head1 METHODS
 
 =head2 store
@@ -771,8 +733,6 @@ that comes with creating web applications models, views and controllers.
     throughout the request.
     
     $s->store->{important_stuff} = "This is top secret stuff";
-
-=cut
 
 =head2 application
 
@@ -787,16 +747,12 @@ that comes with creating web applications models, views and controllers.
     $s->content_type('text/html');
     Content-Type is always 'text/html' by default.
 
-=cut
-
 =head2 content_type
 
     The content_type method set the desired output format for use
     with http response headers.
     
     $s->content_type('text/html');
-
-=cut
 
 =head2 request_method
 
@@ -816,13 +772,9 @@ that comes with creating web applications models, views and controllers.
         ...
     }
 
-=cut
-
 =head2 request
 
     The request method is an alias for request_method.
-
-=cut
 
 =head2 file
 
@@ -835,16 +787,12 @@ that comes with creating web applications models, views and controllers.
     $s->file('x', 'somefile.txt');  # delete
     
 
-=cut
-
 =head2 push_download
 
     The push_download method when used prompts the user to download the
     specified file without redirect.
     
     $s->push_download('test.txt');
-
-=cut
 
 =head2 flash
 
@@ -863,8 +811,6 @@ that comes with creating web applications models, views and controllers.
     # clear flash message
     my $message = $s->flash('');
     # returns previous message then clears, $message equals ""
-
-=cut
 
 =head2 html
 
@@ -909,8 +855,6 @@ that comes with creating web applications models, views and controllers.
     
     # @data contains ['this is a test','or maybe not']
 
-=cut
-
 =head2 upload
 
     The upload method copies a file from the users computer to the server
@@ -920,8 +864,6 @@ that comes with creating web applications models, views and controllers.
     my $file = $s->upload('input_file_field', 'location');
     my $file = $s->upload('input_file_field', 'location', 'new_file_name');
 
-=cut
-
 =head2 debug
 
     The debug method sets data to be output to the browser with
@@ -929,8 +871,6 @@ that comes with creating web applications models, views and controllers.
     with no parameters returns the data recorded and clears the
     data store. debug() is the functional equivilent of html()
     but with a different purpose.
-
-=cut
 
 =head2 output
 
@@ -946,15 +886,11 @@ that comes with creating web applications models, views and controllers.
     $s->output(""); or $s->output("\n"); or $s->output("<br/>");
     # outputs debug data.
 
-=cut
-
 =head2 redirect
 
     This method redirects the request to the supplied url. If no url
     is supplied, the request is redirected to the default page as defined
     in your .htaccess or controller/Root.pm file.
-
-=cut
 
 =head2 plug
 
@@ -975,8 +911,6 @@ that comes with creating web applications models, views and controllers.
     # NOTE! plugins should be defined within the plugins methods of
     the App.pm package;
 
-=cut
-
 =head2 unplug
 
     The unplug method releases the reference to the module object
@@ -993,8 +927,6 @@ that comes with creating web applications models, views and controllers.
     # in the example above, $foo and $bar hold the same reference, but
     $baz is holding a new refernce as if it called CPAN::Module->new;
     as defined in the plugins method in App.pm
-
-=cut
 
 =head2 routes
 
@@ -1045,64 +977,5 @@ that comes with creating web applications models, views and controllers.
     automatically generated ones, so if an automatically generated route exists
     that occupies the path of a manually defined one, the manually create one
     will be override the automatically created one.
-
-=cut
-
-=head1 AUTHOR
-
-Al Newkirk, C<< <al.newkirk at awnstudio.com> >> on irc as perletc or awnstudio
-
-=head1 BUGS
-
-Please report any bugs or feature requests to
-C<bug-sweetpea at rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SweetPea>. I will be notified,
-and then you'll automatically be notified of progress on
-your bug as I make changes.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc sweetpea
-    perldoc SweetPea or perldoc SweetPea.pm
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=SweetPea>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/SweetPea>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/SweetPea>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/SweetPea/>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-Thanks to all the developers of Mojolicious and Catalyst that inspired this.
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2009 Al Newkirk.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of either: the GNU General Public License as published
-by the Free Software Foundation; or the Artistic License.
-
-See http://dev.perl.org/licenses/ for more information.
-
 
 =cut
