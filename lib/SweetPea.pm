@@ -21,11 +21,11 @@ use File::Find;
 
 =head1 VERSION
 
-Version 2.3661
+Version 2.3662
 
 =cut
 
-our $VERSION = '2.3661';
+our $VERSION = '2.3662';
 
 =head1 DESCRIPTION
 

@@ -3,7 +3,7 @@
 #   bugs
     [x] root-level route failure after 3 inline url params
     [x] .t test script produces error when run without params
-    [!] Root.pm & Sweet.pm generated with wrong/bad permissions
+    [x] Root.pm & Sweet.pm generated with wrong/bad permissions
 
 #   pending
 -   [-] Change the welcome screen to match website
