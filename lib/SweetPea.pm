@@ -21,11 +21,11 @@ use File::Find;
 
 =head1 VERSION
 
-Version 2.3662
+Version 2.3663
 
 =cut
 
-our $VERSION = '2.3662';
+our $VERSION = '2.3663';
 
 =head1 DESCRIPTION
 
@@ -1481,8 +1481,13 @@ sub flash {
         # append magic if message is not empty
         if ($message ne '' && $last_message) {
             my $arrayref = [];
-            if (ref ($last_message) eq "ARRAY") {
-                push @{$arrayref}, $_ foreach @{$last_message};
+            if ($last_message) {
+                if (ref ($last_message) eq "ARRAY") {
+                    push @{$arrayref}, $_ foreach @{$last_message};
+                }
+                else {
+                    push @{$arrayref}, $last_message;
+                }
             }
             push @{$arrayref}, $message;
             $message = $arrayref;
