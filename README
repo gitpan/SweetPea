@@ -1,8 +1,8 @@
 SweetPea - A web framework that doesn't get in the way, or suck.
 
 SweetPea is a modern web application framework that is fast, scalable, and
-light-weight. SweetPea has no dependencies so it runs everywhere Perl does.
-SweetPea has a short learning curve and a common sense object-oriented API.
+light-weight. SweetPea has a short learning curve and a common sense
+object-oriented API.
 
 SYNOPSIS
 

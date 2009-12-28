@@ -57,4 +57,6 @@ Revision history for SweetPea
         Renamed force_download to push_download
         .t test script file no longer generated
         .pl dispatcher file merged with .t test script
-        
+2.3664  Sun Dec 27 21:28:18 2009
+        Fixed local session configuration
+        Add POD Documents

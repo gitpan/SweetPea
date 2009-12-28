@@ -21,11 +21,11 @@ use File::Find;
 
 =head1 VERSION
 
-Version 2.3663
+Version 2.3664
 
 =cut
 
-our $VERSION = '2.3663';
+our $VERSION = '2.3664';
 
 =head1 DESCRIPTION
 
@@ -55,11 +55,9 @@ Oh how Sweet web application development can be ...
 
 =cut
 
-=head1 NOTICE!
+=head1 DOCUMENTATION
 
-This POD is being rewritten and may appear incomplete. If so please refer to
-L<SweetPea::Overview> for the original documentation, keep in mind that
-the original documentation may/is probably out-dated.
+Learn more about SweetPea here, L<SweetPea::Documentation>
 
 Also Note!
 The sweetpea application generator script has been moved to
@@ -340,47 +338,58 @@ sub _plugins {
     $self->plug(
         'session',
         sub {
-            require 'CGI/Session.pm';
-            my $self = shift;
-            my $opts = {};
-            if ($self->{store}->{application}->{session_folder}) {
-                $opts->{Directory} =
-                    $self->{store}->{application}->{session_folder};
-            }
-            else {
-                my $session_folder = $ENV{HOME} || "";
-                $session_folder = (split /[\;\:\,]/, $session_folder)[0]
-                 if $session_folder =~ m/[\;\:\,]/;
-                $session_folder =~ s/[\\\/]$//;
-                CGI::Session->name("SID");
-                if ( -d -w "$session_folder/tmp" ) {
-                    $opts->{Directory} = "$session_folder/tmp";
+            eval 'require q(CGI/Session.pm)';
+            unless ($@) {
+                my $self = shift;
+                my $opts = {};
+                if ($self->{store}->{application}->{session_folder}) {
+                    $opts->{Directory} =
+                        $self->{store}->{application}->{session_folder};
                 }
                 else {
-                    if ( -d -w $session_folder ) {
-                        mkdir "$session_folder/tmp", 0777;
+                    if ($self->{store}->{application}->{local_session}) {
+                        my $path = $self->{store}->{application}->{path};
+                        mkdir "./sweet" unless -e "./sweet";
+                        
+                        mkdir "./sweet/sessions" unless -e "./sweet/sessions";
+                        
+                        $opts->{Directory} = './sweet/sessions';
                     }
-                    if ( -d -w "$session_folder/tmp" ) {
-                        $opts->{Directory} = "$session_folder/tmp";
-                    }    
+                    else {
+                        my $session_folder = $ENV{HOME} || "";
+                        $session_folder = (split /\;/, $session_folder)[0]
+                         if $session_folder =~ m/\;/;
+                        $session_folder =~ s/[\\\/]$//;
+                        
+                        if ( -d -w "$session_folder/tmp" ) {
+                            $opts->{Directory} = "$session_folder/tmp";
+                        }
+                        else {
+                            if ( -d -w $session_folder ) {
+                                mkdir "$session_folder/tmp", 0777
+                                    unless -d "$session_folder/tmp";
+                            }
+                            if ( -d -w "$session_folder/tmp" ) {
+                                $opts->{Directory} = "$session_folder/tmp";
+                            }
+                            else {
+                                $opts->{Directory} = $session_folder;
+                            }
+                        }
+                    }
                 }
-                if ($self->{store}->{application}->{local_session}) {
-                    mkdir "sweet"
-                    unless -e
-                    "$self->{store}->{application}->{path}/sweet";
-                    
-                    mkdir "sweet/sessions"
-                    unless -e
-                    "$self->{store}->{application}->{path}/sweet/sessions";
-                    
-                    $opts->{Directory} = 'sweet/sessions';
-                }
+                $self->{store}->{application}->{session_folder} =
+                    $opts->{Directory};
+                CGI::Session->name("SID");
+                my $sess = CGI::Session->new("driver:file", undef, $opts);
+                $sess->flush;
+                return $sess;
             }
-            my $sess = CGI::Session->new("driver:file", undef, $opts);
-            $sess->flush;
-            return $sess;
         }
     );
+    
+    # try to pinup a session
+    $self->session;
 
     # load non-core plugins from App.pm
     if (-e "sweet/App.pm") {

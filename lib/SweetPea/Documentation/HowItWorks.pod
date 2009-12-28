@@ -1,0 +1,591 @@
+=head1 NAME
+
+SweetPea::Documentation::HowItWorks
+
+=head1 DESCRIPTION
+
+This documentation explains how L<SweetPea> processes requests from the browser, how and why the application file system structure and hierarchy works, and some configuration options.
+
+=head1 SYNOPSIS
+
+
+This documentation assumes that you are, have or intend to use the L<SweetPea> application generator via L<SweetPea::Cli> to produce your web application. The following documentation uses the generated files and structure in its examples.
+
+=head2 FILES AND HIERARCHY
+
+    /extras                 ## project files, makefiles, etc
+    /static                 ## static content (html, css, js)
+    /sweet                  ## application files are stored here
+        /application        ## MVC files are stored here
+            /Controller     ## controllers are stored here
+                Root.pm     ## index controller (should always exist)
+                Sweet.pm    ## new application welcome page controller
+            /Model          ## models are stored here
+                Schema.pm   ## new application boiler-plate model 
+            /View           ## views are stored here
+                Main.pm     ## new application boiler-plate view
+        /sessions           ## local session files are stored here
+        /templates          ## templates and layouts are stored here
+        App.pm              ## plugins (other modules, etc) loaded here
+    /.htaccess              ## pretty-urls and security on apache
+    /.pl                    ## dispatcher (controller/action router)
+    /.server                ## development http server
+    /routes.pl              ## user-defined routes
+
+=head2 HOW IT WORKS
+
+SweetPea uses a simple MVC ideology for processing and responding to
+requests. Here is an example request and response outlining how SweetPea
+behaves when a request is recieved.
+    
+    ## Step-By-Step
+    
+    1. The user requests the url http://localhost/admin/auth/
+    
+        #  Note! this works on sub-directories (where the web root is not the
+        #  current working directory) as well as root
+    
+    2. .pl (the dispatcher) extracts the request path and matches it against
+    the routes table.
+    
+        #  admin/auth either matches as a Controller or Controller/Action.
+        #  e.g. Controller::Admin::auth() or Controller::Admin::Auth::_index()
+    
+    3. sweet->run(); loads all plugins and executes the application
+    
+        #  .pl (dispatcher/router) invokes sweet->run,
+        #  the run method executes the global or local _begin method,
+        #  then executes the action or global or local _index method, and
+        #  finally executes the global or local _end method.
+        #  the start and finish methods are then called to create, render
+        #  and finalize the response and output.
+        
+=head1 FILES AND HIERARCHY
+
+=head2 sweet/application/Controller/Root.pm
+
+I<Controller::Root>
+
+    The Root.pm controller is the default controller similar in function to
+    a directory index (e.g. index.html). When a request is received that can
+    not be matched in the routing table, the root/index
+    (or Controller::Root::_index) method is invoked. This makes the _index
+    method of Controller::Root, a kind of global fail-safe or fall back
+    method.
+    
+    The _begin method is executed before the requested action, if no action
+    is specified in the request the _index method is used, The _end method
+    is invoked after the requested action or _index method has been
+    executed.
+    
+    The _begin, _index, and _end methods can exist in any controller and
+    serves the same purposes described here. During application request
+    processing, these special routines are checked for in the namespace of
+    the current requested action's Controller, if they are not found then
+    the (global) alternative found in the Controller::Root namespace will
+    be used.
+
+    The _startup method is a special global method that cannot be overridden
+    and is executed first with each request. The _shutdown is executed last
+    and cannot be overridden either.
+
+    # in Controller/Root.pm
+    package Controller::Root;
+    sub _startup { my ( $self, $s ) = @_; }
+    sub _begin { my ( $self, $s ) = @_; }
+    sub _index { my ( $self, $s ) = @_; }
+    sub _end { my ( $self, $s ) = @_; }
+    sub _shutdown { my ( $self, $s ) = @_; }
+    1;
+
+=head2 sweet/application/Controller/Sweet.pm
+
+I<Controller::Sweet>
+
+    # Sweet.pm
+    * A welcome page for the newly created application. (Safe to delete)
+
+=head2 sweet/application/Model/Schema.pm
+
+I<Model::Schema>
+
+    # Model/Schema.pm
+    The Model::Schema boiler-plate model package is were your data
+    connection, accessors, etc can be placed. SweetPea does not impose
+    a specific configuration style, please feel free to connect to your
+    data in the best possible fashion. Here is an example of how one
+    might use this empty package with DBIx::Class.
+    
+    # in Model/Schema.pm
+    package Model::Schema;
+    use base qw/DBIx::Class::Schema::Loader/;
+    __PACKAGE__->loader_options(debug=>1);
+    1;
+    
+    # in App.pm
+    use Model::Schema;
+    sub plugins {
+        ...
+        $s->plug('data', sub { shift; return Model::Schema->new(@_) });
+    }
+    
+    # example usage in Controller/Root.pm
+    sub _index {
+        my ($self, $s) = @_;
+        ...
+        $s->data->connect($dbi_dsn, $user, $pass, \%dbi_params);
+        ...
+    }
+
+=head2 sweet/application/View/Main.pm
+
+I<View::Main>
+
+    # View/Main.pm
+    The View::Main boiler-plate view package is were your layout/template
+    accessors and producers might be stored. Each view is in fact a package
+    that determines how data should be rendered back to the user in
+    response to the request. Examples of different views are as follows:
+    
+    View::Main - Main view module that renders layouts and templates
+    based on the main application's user interface design.
+    
+    View::Email::HTML - A view module which renders templates to
+    be emailed as HTML.
+    
+    View::Email::TEXT - A view module which renders templates to be
+    emailed as plain text.
+    
+    Here is an example of how one might use this empty
+    package with Template (template toolkit).
+    
+    # in View/Main.pm
+    package View::Main;
+    use base Template;
+    sub new {
+        return __PACKAGE__->new({
+        INCLUDE_PATH => 'sweet/templates/',
+        EVAL_PERL    => 1,
+        });
+    }
+    1;
+    
+    # in App.pm
+    use View::Main;
+    sub plugins {
+        ...
+        $s->plug('view', sub{ shift; return View::Main->new(@_) });
+    }
+    
+    # example usage in Controller/Root.pm
+    sub _index {
+        my ($self, $s) = @_;
+        $s->view->process($template, { s => $s });
+    }    
+    
+=head2 sweet/application/App.pm
+
+I<App>
+
+    # App.pm
+    The App application package is the developers access point to
+    configure and extend the application before request processing. This
+    is typically done using the plugins method. This package contains
+    the special and required plugins method. Inside the plugins method is
+    were other Modules are loaded and Module accessors are created using
+    the core "plug" method. The following is an example of App.pm usage.
+    
+    package App;
+    use warnings;
+    use strict;
+    use HTML::FormFu;
+    use HTML::GridFu;
+    use Model::Schema;
+    use View::Main;
+    
+    sub plugins {
+        my ( $class, $s ) = @_;
+        my $self = bless {}, $class;
+        $s->plug( 'form', sub { shift; return HTML::FormFu->new(@_) } );
+        $s->plug( 'data', sub { shift; return Model::Schema->new(@_) } );
+        $s->plug( 'view', sub { shift; return View::Main->new(@_) } );
+        $s->plug( 'grid', sub { shift; return HTML::GridFu->new(@_) } );
+        return $s;
+    }
+    1;    # End of App
+
+=head2 .htaccess
+
+I<htaccess>
+
+    # .htaccess
+    The .htaccess file allows apache-type web servers that support
+    mod-rewrite to automatically configure your application environment.
+    Using mod-rewrite your application can make use of pretty-urls. The
+    requirements for using .htaccess files with your SweetPea application
+    are as follows:
+    
+    mod-rewrite support
+    .htaccess support with Allow, Deny (in most cases)
+    
+    # in .htaccess
+    DirectoryIndex .pl
+    AddHandler cgi-script .pl .pm .cgi
+    Options +ExecCGI +FollowSymLinks -Indexes
+    
+    RewriteEngine On
+    RewriteCond %{SCRIPT_FILENAME} !-d
+    RewriteCond %{SCRIPT_FILENAME} !-f
+    RewriteRule (.*) .pl/$1 [L]
+
+=head2 .pl
+
+I<pl>
+
+    # .pl
+    The .pl file is the main application router/dispatcher. It is
+    responsible for executing all pre and post processing routines as well
+    as directing requests to the appropriate controllers and actions.
+    
+    #!/usr/bin/env perl
+    
+    use SweetPea;
+    sweet->run;
+
+=head2 .server
+
+I<server>
+
+    # .server
+    The .server script is a development http server which can be used to
+    quickly, test, build and deploy your SweetPea web application.
+    
+    perl .server
+    # or, auto-reload code files per request
+    perl .server 80 update
+
+=head2 routes.pl
+
+I<routes>
+
+    # routes.pl
+    The routes.pl file is where one might place custom url -to- code
+    (or controllers and actions) mappings.
+    
+    my $r = {
+        '/path' => sub {
+            my $s = shift;
+            # $s->forward('SomeController/and_action'); or
+            # SomeController->new->and_action(); or
+            # simply add your action here!
+        }
+    }
+    
+=head1 SPECIAL CONTROLLER ROUTINES
+
+=head2 _startup
+
+    # _startup
+    sub _startup {...}
+    The _startup method is a special global method that cannot be overridden
+    and is executed before any other methods automatically with each request.
+
+=head2 _begin
+
+    # _begin
+    sub _begin {...}
+    
+    The begin method can exist both globally and locally, and will be
+    automatically invoked per request. When a request is processed,
+    SweetPea checks whether the _begin method exists in the namespace
+    of the Controller being requested, if not it checks whether the
+    _begin method exists in the Controller::Root namespace and
+    executes that method. If you opt to keep and use the default
+    controller Controller::Root, then its _begin method will be
+    defined as the global _begin method and will be executed
+    automatically with each request. The automatic execution of
+    _begin in Controller::Root can be overridden by adding a _begin
+    method to the namespace of the controller to be requested.
+    
+    This special method is useful for checking user permissions, etc.
+
+=head2 _index
+
+    # _index
+    sub _index {...}
+    
+    The index method can exist both globally and locally, and will
+    be automatically invoked *only* if an action is not specified.
+    When a request is processed, SweetPea scans the controllers
+    folder building a table of controllers and actions for
+    dispatching. The dispatching routine executes attempts to
+    execute the action, if no action is specified, it
+    default to executing the global or local _index method
+    looking locally first, then globally ofcourse. The automatic
+    execution of _index in Controller::Root can be overridden by
+    adding a _index method to the namespace of the controller to
+    be requested.
+    
+    This special method acts as a directory index or index.html
+    file in that it is executed when no other file (action) is
+    specified.
+    
+=head2 _end
+
+    # _end
+    sub _end {...}
+    
+    The end method can exist both globally and locally, and will be
+    automatically invoked per request. When a request is processed,
+    SweetPea checks whether the _end method exists in the namespace
+    of the Controller being requested, if not it checks whether the
+    _end method exists in the Controller::Root namespace and
+    executes that method. If you opt to keep and use the default
+    controller Controller::Root, then its _end method will be
+    defined as the global _end method and will be executed
+    automatically with each request. The automatic execution of
+    _end in Controller::Root can be overridden by adding a _end
+    method to the namespace of the controller to be requested.
+    
+    This special method is useful for performing cleanup
+    functions at the end of a request.
+
+=head2 _shutdown
+
+    # _shutdown
+    sub _shutdown {...}
+    The _shutdown method is a special global method that cannot be overridden
+    and is executed after all other methods automatically with each request.
+
+=head1 CONTROLLER RULES AND SYNTAX
+
+=head2 The anatomy of a controller method
+
+    Controllers are used by SweetPea in an OO (object-oriented)
+    fashion and thus, all controller methods should follow the
+    same design as they are passed the same parameters.
+    
+    package Controller::Foo;
+    
+    sub bar {
+        my ($self, $s) = @_;
+        ...
+    }
+    
+    1;
+    
+    The foo method above (as well as al other controller methods)
+    are passed at least two objects, an instance of the current
+    controller usually referred to as $self, and an instance of
+    the SweetPea application object usually referred to as $s.
+    
+    Note! Actions prefixed with an underscore can not be
+    displatched to using URLs.
+    
+=head2 How to use plugins (other modules)
+
+    Plugins are a great way to extend the functionality of a
+    SweetPea application. Plugins are defined in the application
+    package App.pm inside of the special plugins method as
+    follows:
+    
+    # inside of App.pm
+    package App;
+    ...
+    use CPAN::Module;
+    
+    sub plugins {
+        ...
+        $s->plug( 'cpan', sub { shift; return CPAN::Module->new(@_) } );
+        return $s;
+    }
+    ...
+    
+    # notice below how an accessor is created for the ficticious
+    CPAN::Module in the SweetPea namespace
+    
+    # inside sweet/Controller/MyController.pm
+    sub _index {
+        my ($self, $s) = @_;
+        $s->cpan->some_method(...);
+    }
+    
+    # when $s->cpan is called, it creates (unless the object reference
+    exists) and returns a reference to that module object. To create
+    or initialize another object, simply call the unplu method on the
+    object's name.
+    
+    # inside sweet/Controller/MyController.pm
+    sub _index {
+        my ($self, $s) = @_;
+        my $foo = $s->cpan;
+        my $bar = $s->cpan;
+        my $baz = $s->unplug('cpan')->cpan;
+    }
+    
+    # in the example above, $foo and $bar hold the same reference, but
+    $baz is holding a new refernce as if it called CPAN::Module->new;
+
+=head1 INSTANTIATION
+
+=head2 new
+
+    The new method initializes a new SweetPea object.
+    
+    # in your .pl or other index/router file
+    my $s = SweetPea->new;
+
+=head2 run
+
+    The run method discovers
+    controllers and actions and executes internal pre and post request processing
+    routines.
+
+    # in your .pl or other index/router file
+    my $s = SweetPea->new->run; # start processing the request
+    
+    NOTE! CGI, CGI::Cookie, and CGI::Session are plugged in automatically
+    by the run method.
+    
+    # accessible via $s->cgi, $s->cookie, and $s->session
+
+=head1 ROUTING/DISPATCHING
+
+    The routes method like most popular routing mechanisms allows you to map
+    urls to routines. SweetPea by default uses an auto-discovery mechanism on
+    the controllers folder to create routes automatically, however there are
+    times when additional flexibility is required.
+    
+    There are two types of routes defined when your application is executed,
+    auto-routing and manual routing. As stated before, auto-routing
+    automatically builds routes base on the Controllers in your applications
+    controllers folder (which is created automatically when you "make" an app
+    using the sweetpea cli). Manual routing is usually established in the
+    dispatcher file as follows:
+    
+    sweet->routes({
+        
+        '/' => sub {
+            shift->html('Index page much!');
+        }
+        
+    })->new;
+    
+    SweetPea routing has support for inline URL parameters and wildcard
+    operators. See examples below:
+    
+    sweet->routes({
+        
+        '/:goto' => sub {
+            my $s = shift;
+            $s->html('Your trying to get to ' . $s->param('goto') );
+            ...
+        },
+        '/download/*' => sub {
+            my $s = shift;
+            $s->redirect($s->param('*')) if $s->param('*');
+            ...
+        },
+        '/dl/:file/:from' => sub {
+            my $s = shift;
+            if ($s->param('file')) {
+                my $contents = $s->file('<',
+                    $s->param('from') . '/' . $s->param('file');
+                );
+            }
+            ...
+        }
+        
+    })->run;
+
+=head1 CONTROLLERS AND ACTIONS
+
+    Controllers are always created in the sweet/controller folder and defined
+    under the Controller namespace, e.g. Controller::MyController. In keeping
+    with simplicity, controllers and actions are actually packages and
+    routines ( controller/action = package controller; sub action {...} ).
+    
+    NOTE! Actions prefixed with an underscore e.g. _foo can not be dispatched to
+    using URLs but are listed in the dispatch table and are available to
+    the forward, detach and many other methods that might invoke an
+    action/method.
+
+
+
+=head1 OTHER DOCUMENTATION
+
+=over 4
+
+
+=item * L<SweetPea::Documentation>
+
+=item * L<SweetPea::Documentation::HowItWorks|SweetPea::Documentation::HowItWorks>
+
+
+=back
+
+
+=head1 PROJECT
+
+SweetPea - A web framework that doesn't get in the way, or suck.
+
+=head1 PROJECT DESCRIPTION
+
+SweetPea is a modern web application framework that is fast, scalable, and light-weight.  SweetPea has a short learning curve and a common sense object-oriented API. See L<SweetPea::Cli::Documentation> for a QuickStart Guide. 
+
+=head1 PROJECT POD URL
+
+L<http://app.alnewkirk.com/pod/projects/sweetpea/>
+
+
+=head1 AUTHOR
+
+Al Newkirk, C<< <al.newkirk at awnstudio.com> >>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to C<bug-SweetPea at rt.cpan.org>, or through
+the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SweetPea>.  I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc SweetPea
+
+You can also look for information at:
+
+=over 4
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=SweetPea>
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/SweetPea>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/SweetPea>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/SweetPea/>
+
+=back
+
+
+=head1 ACKNOWLEDGEMENTS
+
+Al Newkirk <al.newkirk@awnstudio.com>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2009 Al Newkirk, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

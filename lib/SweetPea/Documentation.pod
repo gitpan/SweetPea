@@ -1,0 +1,108 @@
+=head1 NAME
+
+SweetPea::Documentation
+
+=head1 DESCRIPTION
+
+SweetPea is the module you would use when you need to develop modern CGI scripts for web-related purposes. L<SweetPea-Application> is better suite for create robust and scalable web applications. SweetPea was designed for Perl novice and experts alike, please see L<SweetPea::Cli::Documentation> for a quick start guide.
+
+=head1 SYNOPSIS
+
+Oh how Sweet web application development can be ...
+
+    use SweetPea;
+    sweet->routes({
+    
+        '/' => sub {
+            shift->forward('/way');
+        },
+        
+        '/way' => sub {
+            shift->html('I am the way the truth and the light!');
+        }
+        
+    })->run;
+
+=head1 EXPORTED
+
+    sweet(); # a shortcut to the instantiated SweetPea object
+
+
+
+=head1 OTHER DOCUMENTATION
+
+=over 4
+
+
+=item * L<SweetPea::Documentation>
+
+=item * L<SweetPea::Documentation::HowItWorks|SweetPea::Documentation::HowItWorks>
+
+
+=back
+
+
+=head1 PROJECT
+
+SweetPea - A web framework that doesn't get in the way, or suck.
+
+=head1 PROJECT DESCRIPTION
+
+SweetPea is a modern web application framework that is fast, scalable, and light-weight.  SweetPea has a short learning curve and a common sense object-oriented API. See L<SweetPea::Cli::Documentation> for a QuickStart Guide. 
+
+=head1 PROJECT POD URL
+
+L<http://app.alnewkirk.com/pod/projects/sweetpea/>
+
+
+=head1 AUTHOR
+
+Al Newkirk, C<< <al.newkirk at awnstudio.com> >>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to C<bug-SweetPea at rt.cpan.org>, or through
+the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=SweetPea>.  I will be notified, and then you'll
+automatically be notified of progress on your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc SweetPea
+
+You can also look for information at:
+
+=over 4
+
+=item * RT: CPAN's request tracker
+
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=SweetPea>
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/SweetPea>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/d/SweetPea>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/SweetPea/>
+
+=back
+
+
+=head1 ACKNOWLEDGEMENTS
+
+Al Newkirk <al.newkirk@awnstudio.com>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2009 Al Newkirk, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
